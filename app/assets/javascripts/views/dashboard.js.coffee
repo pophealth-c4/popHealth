@@ -113,6 +113,7 @@ class Thorax.Views.Dashboard extends Thorax.View
     @currentUser = PopHealth.currentUser.get 'username'
     @showAggregateResult = PopHealth.currentUser.showAggregateResult()
     @opml = Config.OPML
+    @showMeasureBaselineReport = Config.showMeasureBaselineReport
 
   toggleAggregateShow: (e) ->    
     shown = PopHealth.currentUser.showAggregateResult()

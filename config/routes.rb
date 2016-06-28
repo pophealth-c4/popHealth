@@ -43,6 +43,8 @@ PopHealth::Application.routes.draw do
       end
     end
 
+    get :measure_baseline
+
     member do
       get :merge_list
       put :merge
@@ -60,6 +62,7 @@ PopHealth::Application.routes.draw do
     get 'teams/team_providers/:id', :to => 'teams#team_providers'
     get 'reports/team_report', :to => 'reports#team_report'
     
+    resources :measure_baselines
     resources :practices
     resources :teams
     namespace :admin do

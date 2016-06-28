@@ -27,6 +27,7 @@ class Ability
       # can [:read, :recalculate,:create, :deleted], QME::QualityReport
       # can [:create,:delete], HealthDataStandards::CQM::Measure
     elsif user.staff_role?
+      can :read, MeasureBaseline
       can :read, HealthDataStandards::CQM::Measure
       if opml
         can :read, Record
@@ -64,6 +65,7 @@ class Ability
         end
       end
     elsif user.id
+      can :read, MeasureBaseline
       can :read, Record do |patient|
         if opml
           patient.providers.map(&:npi).include?(user.npi)
