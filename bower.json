@@ -8,7 +8,7 @@
     "momentjs": "~2.1.0",
     "d3": ">3.0.0",
     "jquery-knob": "~1.2.3",
-    "font-awesome": "~4.0.3",
+    "font-awesome": ">4.0.0",
     "jquery-placeholder": "~2.0.8"
   }
 }
