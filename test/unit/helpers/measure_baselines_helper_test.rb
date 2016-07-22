@@ -1,6 +1,11 @@
 require 'test_helper'
 
 class MeasureBaselinesHelperTest < ActionView::TestCase
+  setup do
+    dump_database
+    load_measure_baselines
+  end
+
   test "get_target_range_css_class should treat non-numeric as no data" do
     assert_equal "no-data-value", get_target_range_css_class(nil, nil, nil)
     assert_equal "no-data-value", get_target_range_css_class(nil, "test", nil)

@@ -23,7 +23,7 @@ class MeasureBaseline
       # and not overlapping.
       if results.first.nil?
         results = MeasureBaseline.where(measure_id: measure_id, sub_id: sub_id,
-          :start_date => {'$lte' => start_date, '$lte' => end_date},
+          :start_date => {'$lte' => [start_date, end_date].max},
           :end_date => {'$gte' => end_date} ).desc(:calculation_date)
       end
     end
