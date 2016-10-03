@@ -1,0 +1,73 @@
+<div class="modal fade" id="filterPatientsDialog" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog"  role="dialog" aria-labelledby="modalTitle">
+    <div class="modal-content">
+      <div class="modal-header">
+        {{#button "close" class="close" data-dismiss="modal" aria-hidden="true"}}&times;{{/button}}
+        <h4 class="modal-title" id="modalTitle">Filter Patients</h4>
+      </div>
+      <div class="modal-body">
+        <form id="filter_providers_form" action="api/filters/provider" method="post" class="form-horizontal" enctype="multipart/form-data" role="form">
+          <div style="margin:0;padding:0;display:inline">
+            <input name="utf8" type="hidden" value="✓">
+            <input name="_method" type="hidden" value="post">
+            <input name="authenticity_token" type="hidden" value="{{token}}">
+          </div>
+          <div class="form-group">
+            <label for="selectProviderFilter" class="col-lg-{{titleSize}} control-label">Select an existing filter:</label>
+            <div class="col-lg-{{dataSize}}">
+              <select class="form-control" id="selectProviderFilter" name="selectProviderFilter">
+              </select>
+            </div>
+          </div>
+          <hr/>
+          <div class="form-group" style="text-align: center;">- or -</div>
+          <hr/>
+          <div class="form-group">
+            Define a filter:
+          </div>
+          <div class="form-group">
+            <label for="payerTags" class="col-lg-{{titleSize}} control-label">Payer:</label>
+            <div class="col-lg-{{dataSize}}">
+              <ul id="payerTags" class="tag-input"></ul>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="ageTags" class="col-lg-{{titleSize}} control-label">Age:</label>
+            <div class="col-lg-{{dataSize}}">
+              <ul id="ageTags" class="tag-input"></ul>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="genderInput" class="col-lg-{{titleSize}} control-label">Gender:</label>
+            <div class="col-lg-{{dataSize}}">
+              <input type="checkbox" name="gender[]" value="1" /> Male
+              <input type="checkbox" name="gender[]" value="2" /> Female
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="raceTags" class="col-lg-{{titleSize}} control-label">Race:</label>
+            <div class="col-lg-{{dataSize}}">
+              <ul id="raceTags" class="tag-input"></ul>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="ethnicityTags" class="col-lg-{{titleSize}} control-label">Ethnicity:</label>
+            <div class="col-lg-{{dataSize}}">
+              <ul id="ethnicityTags" class="tag-input"></ul>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="problemListTags" class="col-lg-{{titleSize}} control-label">Problem List:</label>
+            <div class="col-lg-{{dataSize}}">
+              <ul id="problemListTags" class="tag-input"></ul>
+            </div>
+          </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Save and Run</button>
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>

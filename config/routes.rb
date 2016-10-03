@@ -62,6 +62,8 @@ PopHealth::Application.routes.draw do
     get 'teams/team_providers/:id', :to => 'teams#team_providers'
     get 'reports/team_report', :to => 'reports#team_report'
 
+    get 'value_sets', :to => 'value_sets#index', :format => :json
+
     resources :practices
     resources :teams
     namespace :admin do

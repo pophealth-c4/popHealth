@@ -1,5 +1,6 @@
 #= require jquery/jquery
 #= require jquery_ujs
+#= require jquery-ui
 #= require bootstrap-datepicker/core
 #= require jquery-idletimer/dist/idle-timer
 #= require jQuery-Knob/js/jquery.knob
@@ -13,6 +14,7 @@
 #= require thorax/thorax
 #= require backbone_sync_rails
 #= require d3/d3
+#= require tag-it/js/tag-it
 #
 #= require config
 #= require helpers

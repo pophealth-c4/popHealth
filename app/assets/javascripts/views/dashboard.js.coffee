@@ -96,6 +96,8 @@ class Thorax.Views.Dashboard extends Thorax.View
     'click .btn-checkbox.individual':    'toggleMeasure'
     'keyup .category-measure-search': 'search'
     'click .clear-search':            'clearSearch'
+    'click #define-provider-filter': 'defineProviderFilterShow'
+    'click #define-patient-filter': 'definePatientFilterShow'
     'change .rescale': (event) ->
       @$('.rescale').parent().toggleClass("btn-primary")
       PopHealth.currentUser.setPopulationChartScale(event.target.value=="true")
@@ -113,6 +115,16 @@ class Thorax.Views.Dashboard extends Thorax.View
     @currentUser = PopHealth.currentUser.get 'username'
     @showAggregateResult = PopHealth.currentUser.showAggregateResult()
     @opml = Config.OPML
+
+  defineProviderFilterShow: (event) ->
+    filterProvidersView = new Thorax.Views.FilterProviders()
+    filterProvidersView.appendTo(@$el)
+    filterProvidersView.display()
+
+  definePatientFilterShow: (event) ->
+    filterPatientsView = new Thorax.Views.FilterPatients()
+    filterPatientsView.appendTo(@$el)
+    filterPatientsView.display()
 
   toggleAggregateShow: (e) ->    
     shown = PopHealth.currentUser.showAggregateResult()
