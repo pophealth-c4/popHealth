@@ -52,6 +52,14 @@ module Api
       render :json => @practice
     end
     
+    api :GET, "/practices/search?tin=:tin", "Search for practice by a full or partial TIN"
+    param :tin, String, :desc => "Tax Identification Number", :required => true
+    def search
+      practices = Provider.all({"cda_identifiers.root" => "2.16.840.1.113883.4.2", "cda_identifiers.extension" => /.*#{params[:tin]}.*/ })
+      render json: practices.map {|p| { id: p.practice.id, name: "#{p.full_name} (#{p.tin})"} }
+    end
+
+
     private 
 
     def validate_authorization!

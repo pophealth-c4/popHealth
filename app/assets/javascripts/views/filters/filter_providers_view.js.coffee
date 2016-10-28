@@ -29,7 +29,7 @@ class Thorax.Views.FilterProviders extends Thorax.View
         minLength: 2
         source: ( request, response ) ->
           $.ajax
-            url: url
+            url: url + request.term
             dataType: "json"
             success: ( data ) ->
               autoData = $.map data, ( item ) ->
@@ -39,8 +39,8 @@ class Thorax.Views.FilterProviders extends Thorax.View
 
   setup: ->
     @filterProvidersDialog = @$("#filterProvidersDialog")
-    @setupTag "#npiTags", "http://localhost:3000/api/value_sets"
-    @setupTag "#tinTags", "http://localhost:3000/api/value_sets"
+    @setupTag "#npiTags", "http://localhost:3000/api/providers/search?npi="
+    @setupTag "#tinTags", "http://localhost:3000/api/practices/search?tin="
     @setupTag "#providerTypeTags", "http://localhost:3000/api/value_sets"
     @setupTag "#addressTags", "http://localhost:3000/api/value_sets"
 

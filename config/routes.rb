@@ -62,9 +62,14 @@ PopHealth::Application.routes.draw do
     get 'teams/team_providers/:id', :to => 'teams#team_providers'
     get 'reports/team_report', :to => 'reports#team_report'
 
-    get 'value_sets', :to => 'value_sets#index', :format => :json
+    # The OID may contain periods, so specify a regex to allow that
+    get 'value_sets/:oid', :to => 'value_sets#show', :oid => /([^\/])+?/, :format => :json
 
-    resources :practices
+    resources :practices do
+      collection do
+        get :search
+      end
+    end
     resources :teams
     namespace :admin do
       resource :caches do
@@ -94,6 +99,9 @@ PopHealth::Application.routes.draw do
       end
     end
     resources :providers do
+      collection do
+        get :search
+      end
       resources :patients do
         collection do
           get :manage
