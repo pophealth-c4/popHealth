@@ -43,7 +43,7 @@ class AdminController < ApplicationController
   def remove_caches
     HealthDataStandards::CQM::QueryCache.delete_all
     PatientCache.delete_all
-    Mongoid.default_session["rollup_buffer"].drop()
+    Mongoid.default_client["rollup_buffer"].drop()
     redirect_to action: 'patients'
   end
 

@@ -41,7 +41,8 @@ module Api
                                    generate_header(provider),
                                    effective_date.to_i,
                                    Time.at(effective_start_date.to_i),
-                                   end_date,
+                                  end_date,
+                                  'r1_1',
                                    provider_filter), content_type: "attachment/xml"
     end
 

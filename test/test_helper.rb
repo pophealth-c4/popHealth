@@ -15,7 +15,7 @@ class ActiveSupport::TestCase
     User.delete_all
     Provider.delete_all
     Record.delete_all
-    db = Mongoid.default_session
+    db = Mongoid.default_client
     db['measures'].drop()
     db['selected_measures'].drop()
     db['records'].drop

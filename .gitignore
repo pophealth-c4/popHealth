@@ -20,3 +20,8 @@ bundles/*
 .bundle/config
 dump.rdb
 .tags*
+.idea
+*.iml
+public/assets
+vendor/assets/components/*
+

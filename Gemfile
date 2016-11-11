@@ -1,12 +1,21 @@
-source 'http://rubygems.org'
+source 'https://rubygems.org'
 
-gem 'rails', '~> 4.1.2'
-gem 'quality-measure-engine', '3.1.2'
-gem "hqmf2js", :git=> "https://github.com/projecttacoma/hqmf2js.git"
-gem 'health-data-standards', '3.6.1' #:git => "https://github.com/projectcypress/health-data-standards.git"#, '3.5.3'
-#gem 'health-data-standards', :path=> '../health-data-standards'
-gem 'nokogiri'
-gem 'rubyzip'
+gem 'rails', '~> 4.2.7'
+
+# Use MongoDB just like in Cypress v2!
+gem 'mongoid', '~> 5.0.0'
+gem 'mongo', '~>2.2'
+# gem 'mongoid', '~> 4.0.2'
+gem 'bson_ext', '~> 1.5.1'
+gem 'delayed_job_mongoid', github: 'collectiveidea/delayed_job_mongoid'
+gem 'health-data-standards', git: 'https://github.com/projectcypress/health-data-standards.git', branch: 'mongoid5'
+
+gem 'quality-measure-engine',
+    git: 'https://github.com/projectcypress/quality-measure-engine.git', branch: 'bump_mongoid'
+
+gem "hqmf2js", :git=> "https://github.com/popHealth-c4/hqmf2js.git"
+gem 'nokogiri', '~> 1.6.8'
+gem 'rubyzip', '1.2.0'
 gem 'net-ssh', '2.9.1'
 gem 'hquery-patient-api', '1.0.4'
 gem 'spreadsheet', '1.0.3'
@@ -20,33 +29,32 @@ gem "active_model_serializers", '0.8.1'
 
 gem 'json', :platforms => :jruby
 
-gem "mongoid"
 
-gem 'highline'
+gem 'highline', '~> 1.7.8'
 
-gem 'devise'
+gem 'devise', '4.1.1'
 
 gem 'git'
 
-gem 'protected_attributes', '~> 1.0.5'
+gem 'protected_attributes', '~> 1.0.9'
 
 gem 'foreman'
-gem "thin"
+gem "thin" , '1.7.0'
 gem 'formtastic'
 gem 'cancan'
-gem 'factory_girl', "2.6.3"
+gem 'factory_girl', "4.7.0"
 gem 'apipie-rails'
 
 # Gems used for assets
-gem 'bootstrap-sass', '~> 3.0.3'
-gem 'sass-rails', "~> 4.0.2"
+gem 'bootstrap-sass', '~> 3.3.5'
+gem 'sass-rails', "~> 5.0.4"
 gem 'coffee-rails'
 gem 'jquery-rails' # necessary for jquery_ujs w/data-method="delete" etc
 gem 'bootstrap-datepicker-rails', '1.3.0.2'
-gem 'uglifier'
+gem 'uglifier', '~> 1.3.0'
 gem 'non-stupid-digest-assets' # support vendored non-digest assets
-gem 'jquery-datatables-rails', '3.1.1'
-gem 'jquery-ui-rails'
+gem 'jquery-datatables-rails', '3.3.0'
+gem 'jquery-ui-rails', '~> 5.0.5'
 
 group :test, :develop, :ci do
   gem 'pry'
@@ -68,4 +76,5 @@ group :production do
   gem 'therubyracer', '~> 0.12.0', :platforms => [:ruby, :jruby] # 10.8 mountain lion compatibility
 end
 
-gem 'handlebars_assets', '0.17.1'
+# gem 'handlebars_assets', '0.17.1'
+gem 'handlebars_assets', '0.23.1'

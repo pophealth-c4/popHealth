@@ -5,6 +5,8 @@ popHealth is an open source tool that allows healthcare providers to calculate q
 
 popHealth can import patient summaries in either [QRDA Cat I](http://www.hl7.org/implement/standards/product_brief.cfm?product_id=35) or [HITSP C32](http://www.hitsp.org/ConstructSet_Details.aspx?&PrefixAlpha=4&PrefixNumeric=32) format. popHealth will extract information from the patient summaries and calculate quality reports.
 
+Edit ````config/pophealth.yml```` to supply organization-specific information for QRDA-CAT3 output.
+
 Additional Information
 ----------------------
 

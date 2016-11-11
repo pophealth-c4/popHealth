@@ -8,7 +8,7 @@ require "rails/test_unit/railtie"
 require "sprockets/railtie"
 require 'spreadsheet'
 require 'bson'
-require 'moped'
+require 'mongo'
 
 if defined?(Bundler)
   # If you precompile assets before deploying to production, use this line
@@ -19,7 +19,6 @@ end
 
 module PopHealth
   class Application < Rails::Application
-    Moped::BSON=BSON
     # Settings in config/environments/* take precedence over those specified here.
     # Application configuration should go into files in config/initializers
     # -- all .rb files in that directory are automatically loaded.
@@ -48,7 +47,7 @@ module PopHealth
     config.relative_url_root = ""
     # Configure sensitive parameters which will be filtered from the log file.
     config.filter_parameters += [:password]
-
+    config.log_level = :warn
     # Enable the asset pipeline
     config.assets.enabled = true
 
@@ -58,7 +57,7 @@ module PopHealth
     # add devise views
 #    config.paths["app/views/devise"]
     config.paths["app/views"] << "app/views/devise"
-
+    Mongo::Logger.logger.level = ::Logger::INFO
     require 'will_paginate/array'
   end
 end

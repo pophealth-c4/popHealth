@@ -10,7 +10,7 @@ module ReportsHelper
                             generate_header(provider),
                             effective_date.to_i,
                             end_date.years_ago(1),
-                            end_date, provider_filter)
+                            end_date, 'r1_1', provider_filter)
   end
 
   def generate_header(provider)

@@ -2,14 +2,14 @@
 #= require jquery_ujs
 #= require bootstrap-datepicker/core
 #= require jquery-idletimer/dist/idle-timer
-#= require jQuery-Knob/js/jquery.knob
+#= require jquery-knob/js/jquery.knob
 #= require jquery-placeholder/jquery.placeholder
 #= require numeral/numeral
 #= require momentjs/moment
 #= require bootstrap
 #= require underscore/underscore
 #= require backbone/backbone
-#= require handlebars/handlebars
+#= require handlebars
 #= require thorax/thorax
 #= require backbone_sync_rails
 #= require d3/d3
