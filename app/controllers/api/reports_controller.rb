@@ -30,7 +30,8 @@ module Api
       effective_date = params["effective_date"] || current_user.effective_date || Time.gm(2013, 12, 31)
       effective_start_date = params["effective_start_date"] || current_user.effective_start_date || Time.gm(2012, 12, 31)
       end_date = Time.at(effective_date.to_i)
-      r1_1_date = DateTime.new(2016,1,1)
+      bndl = (b = HealthDataStandards::CQM::Bundle.all.sort(:version => :desc).first) ? b.version : 'n/a'
+      use_r11 = /2016/ =~ bndl
       provider = provider_filter = nil
       if params[:provider_id].present?
         provider = Provider.find(params[:provider_id])
@@ -43,7 +44,7 @@ module Api
                                    effective_date.to_i,
                                    Time.at(effective_start_date.to_i),
                                   end_date,
-                                  r1_1_date > end_date ? nil : 'r1_1',
+                                  use_r11.nil? ? nil : 'r1_1',
                                    provider_filter), content_type: "attachment/xml"
     end
 
