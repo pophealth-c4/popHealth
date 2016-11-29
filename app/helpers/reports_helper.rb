@@ -3,6 +3,7 @@ module ReportsHelper
     exporter = HealthDataStandards::Export::Cat3.new
     effective_date ||= Time.gm(2012,12,31)
     end_date = DateTime.new(effective_date.to_i, 12, 31)
+    r1_1_date = DateTime.new(2016,1,1)
     provider_filter = {}
     provider_filter['filters.providers'] = provider.id.to_s
     filter = measure_ids==["all"] ? {} : {:cms_id.in => measure_ids}
@@ -10,7 +11,9 @@ module ReportsHelper
                             generate_header(provider),
                             effective_date.to_i,
                             end_date.years_ago(1),
-                            end_date, 'r1_1', provider_filter)
+                           end_date,
+                           r1_1_date > end_date ? nil : 'r1_1',
+                           provider_filter)
   end
 
   def generate_header(provider)
