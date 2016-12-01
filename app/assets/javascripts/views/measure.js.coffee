@@ -19,8 +19,24 @@ class Thorax.Views.MeasureView extends Thorax.LayoutView
       new Thorax.Views.QueryView model: @submeasure.getQueryForProvider(@provider_id), providerId: @provider_id
     @submeasureView = new SubmeasureView model: @submeasure, provider_id: @provider_id
 
+  events:
+    'click #define-provider-filter': 'defineProviderFilterShow'
+    'click #define-patient-filter': 'definePatientFilterShow'
+
   context: ->
     _(super).extend @submeasure.toJSON(), measurementPeriod: moment(PopHealth.currentUser.get 'effective_date' * 1000).format('YYYY')
+
+  defineProviderFilterShow: (event) ->
+    filterProvidersView = new Thorax.Views.FilterProviders()
+    filterProvidersView.appendTo(@$el)
+    filterProvidersView.display()
+    event.preventDefault()
+
+  definePatientFilterShow: (event) ->
+    filterPatientsView = new Thorax.Views.FilterPatients()
+    filterPatientsView.appendTo(@$el)
+    filterPatientsView.display()
+    event.preventDefault()
 
   changeFilter: (submeasure, population) ->
     if submeasure isnt @submeasure

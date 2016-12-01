@@ -1,45 +1,4 @@
 <div class="sidebar" id="filters">
-  <h3>Filters</h3>
-  <div class="panel-group" id="providerFilterSelectors">
-    <div class="panel panel-default">
-      <div class="toggleable panel-heading" data-toggle="collapse" data-parent="#providerFilterSelectors" data-target="#provider-filter">
-        <h4 class="panel-title">
-          <div class="selection-pull-out">
-            <i class="panel-chevron glyphicon glyphicon-chevron-right"></i>
-          </div>
-          Provider Filter
-        </h4>
-      </div>
-      <div id="provider-filter" class="panel-collapse collapse">
-        <div class="panel-body">
-          <div class="btn-block-container">
-            <a href="#" id="define-provider-filter" class="define-filter">Define or Load a Filter</a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="panel-group" id="patientFilterSelectors" style="padding-bottom: 20px;">
-    <div class="panel panel-default">
-      <div class="toggleable panel-heading" data-toggle="collapse" data-parent="#patientFilterSelectors" data-target="#patient-filter">
-        <h4 class="panel-title">
-          <div class="selection-pull-out">
-            <i class="panel-chevron glyphicon glyphicon-chevron-right"></i>
-          </div>
-          Patient Filter
-        </h4>
-      </div>
-      <div id="patient-filter" class="panel-collapse collapse">
-        <div class="panel-body">
-          <div class="btn-block-container">
-            <a href="#" id="define-patient-filter" class="define-filter">Define or Load a Filter</a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-
   {{#unless opml}}
   <span class="panel-title btn btn-checkbox btn-block aggregate-btn {{#if showAggregateResult}}active{{/if}}"> 
     <i class="fa fa-group"/> &nbsp; SHOW AGGREGATE RESULT 
