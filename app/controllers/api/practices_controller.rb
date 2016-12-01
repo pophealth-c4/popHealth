@@ -52,11 +52,19 @@ module Api
       render :json => @practice
     end
     
-    api :GET, "/practices/search?tin=:tin", "Search for practice by a full or partial TIN"
-    param :tin, String, :desc => "Tax Identification Number", :required => true
+    api :GET, "/practices/search?tin=:tin&address=:address", "Search for practice by a full or partial TIN"
+    param :tin, String, :desc => "Tax Identification Number", :required => false
+    param :address, String, :desc => "Provider/Practice Address", :required => false
     def search
-      practices = Provider.all({"cda_identifiers.root" => "2.16.840.1.113883.4.2", "cda_identifiers.extension" => /.*#{params[:tin]}.*/ })
-      render json: practices.map {|p| { id: p.practice.id, name: "#{p.full_name} (#{p.tin})"} }
+      if !params[:npi].blank?
+        practices = Provider.all({"cda_identifiers.root" => "2.16.840.1.113883.4.2", "cda_identifiers.extension" => /.*#{params[:tin]}.*/ })
+        render json: practices.map {|p| { id: p.practice.id, name: "#{p.full_name} (#{p.tin})"} }
+      elsif !params[:address].blank?
+        practices = Practice.all({"address" => /.*#{params[:address]}.*/ })
+        render json: practices.map { |p| { id: p.id, name: p.address } }
+      else
+        render :nothing => true, :status => 400
+      end
     end
 
 

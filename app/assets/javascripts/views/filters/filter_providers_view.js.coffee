@@ -42,7 +42,7 @@ class Thorax.Views.FilterProviders extends Thorax.View
     @setupTag "#npiTags", "http://localhost:3000/api/providers/search?npi="
     @setupTag "#tinTags", "http://localhost:3000/api/practices/search?tin="
     @setupTag "#providerTypeTags", "http://localhost:3000/api/value_sets"
-    @setupTag "#addressTags", "http://localhost:3000/api/value_sets"
+    @setupTag "#addressTags", "http://localhost:3000/api/practices/search?address="
 
   display: ->
     @filterProvidersDialog.modal(

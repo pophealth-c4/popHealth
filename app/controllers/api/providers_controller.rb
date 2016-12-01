@@ -130,7 +130,7 @@ module Api
       render json: nil, status: 204
     end
 
-    api :GET, "/providers/search?npi=:npi", "Search for provider by a full or partial NPI"
+    api :GET, "/providers/search?npi=:npi&address=:address", "Search for provider by a full or partial NPI"
     param :npi, String, :desc => "National Provider Identifier", :required => true
     def search
       providers = Provider.all({"cda_identifiers.root" => "2.16.840.1.113883.4.6", "cda_identifiers.extension" => /.*#{params[:npi]}.*/ })
