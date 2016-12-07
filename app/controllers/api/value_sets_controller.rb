@@ -9,7 +9,7 @@ module Api
     param :search, String, :desc => "Value set term search string", :required => false
     def show
       value_set = HealthDataStandards::SVS::ValueSet.where({oid: params[:oid]}).first
-      render json: value_set.concepts.all({display_name: /.*#{params[:search]}.*/ })
+      render json: value_set.concepts.all({display_name: /.*#{params[:search]}.*/i })
     end
   end
 end

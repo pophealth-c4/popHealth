@@ -24,6 +24,7 @@ class Thorax.Views.FilterProviders extends Thorax.View
       allowSpaces: true
       placeholderText: placeholder
       animate: false
+      removeConfirmation: true
       autocomplete:
         delay: 500
         minLength: 2
