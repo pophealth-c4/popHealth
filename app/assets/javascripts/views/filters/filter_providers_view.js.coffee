@@ -19,8 +19,9 @@ class Thorax.Views.FilterProviders extends Thorax.View
     'ready': 'setup'
     'click #save_and_run': 'submit'
 
-  setupTag: (elementSelector, url, placeholder) ->
+  setupTag: (elementSelector, fieldName, url, placeholder) ->
     $(elementSelector).tagit {
+      fieldName: fieldName,
       showAutocompleteOnFocus: true
       allowSpaces: true
       placeholderText: placeholder
@@ -41,10 +42,10 @@ class Thorax.Views.FilterProviders extends Thorax.View
 
   setup: ->
     @filterProvidersDialog = @$("#filterProvidersDialog")
-    @setupTag "#npiTags", "api/providers/search?npi="
-    @setupTag "#tinTags", "api/practices/search?tin="
-    @setupTag "#providerTypeTags", "api/value_sets/2.16.840.1.113762.1.4.1026.23.json?search="
-    @setupTag "#addressTags", "api/practices/search?address="
+    @setupTag "#npiTags", "npi", "api/providers/search?npi="
+    @setupTag "#tinTags", "tin", "api/practices/search?tin="
+    @setupTag "#providerTypeTags", "providerType", "api/value_sets/2.16.840.1.113762.1.4.1026.23.json?search="
+    @setupTag "#addressTags", "address", "api/practices/search?address="
 
   display: ->
     @filterProvidersDialog.modal(
@@ -54,3 +55,4 @@ class Thorax.Views.FilterProviders extends Thorax.View
 
   submit: ->
     @filterProvidersDialog.modal('hide')
+    @trigger('filterSaved')

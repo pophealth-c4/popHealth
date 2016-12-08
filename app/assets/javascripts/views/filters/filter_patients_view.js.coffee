@@ -55,3 +55,4 @@ class Thorax.Views.FilterPatients extends Thorax.View
 
   submit: ->
     @filterPatientsDialog.modal('hide')
+    @trigger('filterSaved')
