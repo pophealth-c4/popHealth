@@ -17,6 +17,7 @@ class Thorax.Views.FilterProviders extends Thorax.View
 
   events:
     'ready': 'setup'
+    'click #save_and_run': 'submit'
 
   setupTag: (elementSelector, url, placeholder) ->
     $(elementSelector).tagit {
@@ -40,10 +41,10 @@ class Thorax.Views.FilterProviders extends Thorax.View
 
   setup: ->
     @filterProvidersDialog = @$("#filterProvidersDialog")
-    @setupTag "#npiTags", "http://localhost:3000/api/providers/search?npi="
-    @setupTag "#tinTags", "http://localhost:3000/api/practices/search?tin="
-    @setupTag "#providerTypeTags", "http://localhost:3000/api/value_sets/2.16.840.1.113762.1.4.1026.23.json?search="
-    @setupTag "#addressTags", "http://localhost:3000/api/practices/search?address="
+    @setupTag "#npiTags", "api/providers/search?npi="
+    @setupTag "#tinTags", "api/practices/search?tin="
+    @setupTag "#providerTypeTags", "api/value_sets/2.16.840.1.113762.1.4.1026.23.json?search="
+    @setupTag "#addressTags", "api/practices/search?address="
 
   display: ->
     @filterProvidersDialog.modal(
