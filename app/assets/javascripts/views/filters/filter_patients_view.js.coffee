@@ -43,7 +43,7 @@ class Thorax.Views.FilterPatients extends Thorax.View
     @setupTag "#payerTags", "http://localhost:3000/api/value_sets/2.16.840.1.114222.4.11.3591.json?search="
     @setupTag "#raceTags", "http://localhost:3000/api/value_sets/2.16.840.1.114222.4.11.836.json?search="
     @setupTag "#ethnicityTags", "http://localhost:3000/api/value_sets/2.16.840.1.114222.4.11.837.json?search="
-    @setupTag "#problemListTags", "http://localhost:3000/api/value_sets"
+    @setupTag "#problemListTags", "http://localhost:3000/api/value_sets/measure"
     @setupTag "#ageTags", null, "e.g. 18-25, >=30"
 
   display: ->
