@@ -30,13 +30,21 @@ class Thorax.Views.MeasureView extends Thorax.LayoutView
     filterProvidersView = new Thorax.Views.FilterProviders()
     filterProvidersView.appendTo(@$el)
     filterProvidersView.display()
+    @listenTo(filterProvidersView, 'filterSaved', @providerFilterSaved);
     event.preventDefault()
+
+  providerFilterSaved: (event) ->
+    alert('phew1')
 
   definePatientFilterShow: (event) ->
     filterPatientsView = new Thorax.Views.FilterPatients()
     filterPatientsView.appendTo(@$el)
     filterPatientsView.display()
+    @listenTo(filterPatientsView, 'filterSaved', @patientFilterSaved);
     event.preventDefault()
+
+  patientFilterSaved: (event) ->
+    alert('phew2')
 
   changeFilter: (submeasure, population) ->
     if submeasure isnt @submeasure

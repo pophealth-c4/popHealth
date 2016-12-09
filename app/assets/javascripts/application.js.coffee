@@ -27,6 +27,7 @@
 #= require_self
 #= require dataTables/jquery.dataTables
 #= require teams
+#= require select2
 
 if Config.idleTimeout.isEnabled
   $(document).idleTimer Config.idleTimeout.timer

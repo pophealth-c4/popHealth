@@ -19,33 +19,36 @@ class Thorax.Views.FilterProviders extends Thorax.View
     'ready': 'setup'
     'click #save_and_run': 'submit'
 
-  setupTag: (elementSelector, fieldName, url, placeholder) ->
-    $(elementSelector).tagit {
-      fieldName: fieldName,
-      showAutocompleteOnFocus: true
-      allowSpaces: true
-      placeholderText: placeholder
-      animate: false
-      removeConfirmation: true
-      autocomplete:
+  setupSelect: (elementSelector, fieldName, url, placeholder) ->
+    $(elementSelector).select2 {
+      ajax:
+        url: (params) ->
+          return url + params.term
+        dataType: 'json'
         delay: 500
-        minLength: 2
-        source: ( request, response ) ->
-          $.ajax
-            url: url + request.term
-            dataType: "json"
-            success: ( data ) ->
-              autoData = $.map data, ( item ) ->
-                return { label: (if item.name then item.name else item.display_name), value: (if item.id then item.id else item._id) }
-              response autoData
+        data: (params) ->
+          return {}
+        processResults: (data, params) ->
+          autoData = $.map data, ( item ) ->
+            return { text: (if item.name then item.name else item.display_name), id: (if item.id then item.id else item._id) }
+          return { results: autoData, pagination: { more: false } }
+        cache: true
+      createTag: (params) ->
+        # Disables new tags being allowed (we only want what's returned from the search)
+        return undefined
+      minimumInputLength: 2
+      theme: "bootstrap"
+      placeholder: placeholder
+      tags: true
+      minimumResultsForSearch: Infinity
     }
 
   setup: ->
     @filterProvidersDialog = @$("#filterProvidersDialog")
-    @setupTag "#npiTags", "npi", "api/providers/search?npi="
-    @setupTag "#tinTags", "tin", "api/practices/search?tin="
-    @setupTag "#providerTypeTags", "providerType", "api/value_sets/2.16.840.1.113762.1.4.1026.23.json?search="
-    @setupTag "#addressTags", "address", "api/practices/search?address="
+    @setupSelect "#npiTags", "npi", "api/providers/search?npi="
+    @setupSelect "#tinTags", "tin", "api/practices/search?tin="
+    @setupSelect "#providerTypeTags", "providerType", "api/value_sets/2.16.840.1.113762.1.4.1026.23.json?search="
+    @setupSelect "#addressTags", "address", "api/practices/search?address="
 
   display: ->
     @filterProvidersDialog.modal(

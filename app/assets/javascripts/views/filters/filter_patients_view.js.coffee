@@ -19,33 +19,45 @@ class Thorax.Views.FilterPatients extends Thorax.View
     'ready': 'setup'
     'click #save_and_run': 'submit'
    
-  setupTag: (elementSelector, url, placeholder) ->
+  setupSelect: (elementSelector, url, placeholder) ->
+    $(elementSelector).select2 {
+      ajax:
+        url: (params) ->
+          return url + params.term
+        dataType: 'json'
+        delay: 500
+        data: (params) ->
+          return {}
+        processResults: (data, params) ->
+          autoData = $.map data, ( item ) ->
+            return { text: (if item.name then item.name else item.display_name), id: (if item.id then item.id else item._id) }
+          return { results: autoData, pagination: { more: false } }
+        cache: true
+      createTag: (params) ->
+        # Disables new tags being allowed (we only want what's returned from the search)
+        return undefined
+      minimumInputLength: 2
+      theme: "bootstrap"
+      placeholder: placeholder
+      tags: true
+      minimumResultsForSearch: Infinity
+    }
+
+  setupTag: (elementSelector, placeholder) ->
     $(elementSelector).tagit {
-      showAutocompleteOnFocus: true
       allowSpaces: true
       placeholderText: placeholder
       animate: false
       removeConfirmation: true
-      autocomplete:
-        delay: 500
-        minLength: 2
-        source: ( request, response ) ->
-          $.ajax
-            url: url + request.term
-            dataType: "json"
-            success: ( data ) ->
-              autoData = $.map data, ( item ) ->
-                return { label: item.display_name, value: item._id }
-              response autoData
     }
 
   setup: ->
     @filterPatientsDialog = @$("#filterPatientsDialog")
-    @setupTag "#payerTags", "api/value_sets/2.16.840.1.114222.4.11.3591.json?search="
-    @setupTag "#raceTags", "api/value_sets/2.16.840.1.114222.4.11.836.json?search="
-    @setupTag "#ethnicityTags", "api/value_sets/2.16.840.1.114222.4.11.837.json?search="
-    @setupTag "#problemListTags", "api/value_sets/measure"
-    @setupTag "#ageTags", null, "e.g. 18-25, >=30"
+    @setupSelect "#payerTags", "api/value_sets/2.16.840.1.114222.4.11.3591.json?search="
+    @setupSelect "#raceTags", "api/value_sets/2.16.840.1.114222.4.11.836.json?search="
+    @setupSelect "#ethnicityTags", "api/value_sets/2.16.840.1.114222.4.11.837.json?search="
+    @setupSelect "#problemListTags", "api/value_sets/measure"
+    @setupTag "#ageTags", "e.g. 18-25, >=30"
 
   display: ->
     @filterPatientsDialog.modal(
@@ -53,6 +65,12 @@ class Thorax.Views.FilterPatients extends Thorax.View
       "keyboard" : true,
       "show" : true)
 
+  getSelect2Values: (elementSelector, fieldName) ->
+    data = { filter : fieldName, items : [] }
+    $(elementSelector + " option:selected").each (item) ->
+      data.items.push({id: item.value, text: item.text })
+
   submit: ->
+    @getSelect2Values "#payerTags", "payer"
     @filterPatientsDialog.modal('hide')
     @trigger('filterSaved')
