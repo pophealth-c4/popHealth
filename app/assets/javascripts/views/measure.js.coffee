@@ -18,6 +18,10 @@ class Thorax.Views.MeasureView extends Thorax.LayoutView
     else
       new Thorax.Views.QueryView model: @submeasure.getQueryForProvider(@provider_id), providerId: @provider_id
     @submeasureView = new SubmeasureView model: @submeasure, provider_id: @provider_id
+    @patientFilter = []
+    @providerFilter = []
+    @filterProvidersView = null
+    @filterPatientsView = null
 
   events:
     'click #define-provider-filter': 'defineProviderFilterShow'
@@ -27,24 +31,28 @@ class Thorax.Views.MeasureView extends Thorax.LayoutView
     _(super).extend @submeasure.toJSON(), measurementPeriod: moment(PopHealth.currentUser.get 'effective_date' * 1000).format('YYYY')
 
   defineProviderFilterShow: (event) ->
-    filterProvidersView = new Thorax.Views.FilterProviders()
-    filterProvidersView.appendTo(@$el)
-    filterProvidersView.display()
-    @listenTo(filterProvidersView, 'filterSaved', @providerFilterSaved);
+    if (!@filterProvidersView)
+      @filterProvidersView = new Thorax.Views.FilterProviders()
+      @filterProvidersView.appendTo(@$el)
+    @filterProvidersView.filter = @providerFilter
+    @filterProvidersView.display()
+    @listenTo(@filterProvidersView, 'filterSaved', @providerFilterSaved);
     event.preventDefault()
 
-  providerFilterSaved: (event) ->
-    alert('phew1')
+  providerFilterSaved: (filter) ->
+    @providerFilter = filter
 
   definePatientFilterShow: (event) ->
-    filterPatientsView = new Thorax.Views.FilterPatients()
-    filterPatientsView.appendTo(@$el)
-    filterPatientsView.display()
-    @listenTo(filterPatientsView, 'filterSaved', @patientFilterSaved);
+    if (!@filterPatientsView)
+      @filterPatientsView = new Thorax.Views.FilterPatients()
+      @filterPatientsView.appendTo(@$el)
+    @filterPatientsView.filter = @patientFilter
+    @filterPatientsView.display()
+    @listenTo(@filterPatientsView, 'filterSaved', @patientFilterSaved);
     event.preventDefault()
 
-  patientFilterSaved: (event) ->
-    alert('phew2')
+  patientFilterSaved: (filter) ->
+    @patientFilter = filter
 
   changeFilter: (submeasure, population) ->
     if submeasure isnt @submeasure

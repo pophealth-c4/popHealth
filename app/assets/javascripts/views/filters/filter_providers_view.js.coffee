@@ -1,4 +1,4 @@
-class Thorax.Views.FilterProviders extends Thorax.View
+class Thorax.Views.FilterProviders extends Thorax.Views.BaseFilterView
   template: JST['filters/filter_providers']
 
   context: ->
@@ -19,36 +19,12 @@ class Thorax.Views.FilterProviders extends Thorax.View
     'ready': 'setup'
     'click #save_and_run': 'submit'
 
-  setupSelect: (elementSelector, fieldName, url, placeholder) ->
-    $(elementSelector).select2 {
-      ajax:
-        url: (params) ->
-          return url + params.term
-        dataType: 'json'
-        delay: 500
-        data: (params) ->
-          return {}
-        processResults: (data, params) ->
-          autoData = $.map data, ( item ) ->
-            return { text: (if item.name then item.name else item.display_name), id: (if item.id then item.id else item._id) }
-          return { results: autoData, pagination: { more: false } }
-        cache: true
-      createTag: (params) ->
-        # Disables new tags being allowed (we only want what's returned from the search)
-        return undefined
-      minimumInputLength: 2
-      theme: "bootstrap"
-      placeholder: placeholder
-      tags: true
-      minimumResultsForSearch: Infinity
-    }
-
   setup: ->
     @filterProvidersDialog = @$("#filterProvidersDialog")
-    @setupSelect "#npiTags", "npi", "api/providers/search?npi="
-    @setupSelect "#tinTags", "tin", "api/practices/search?tin="
-    @setupSelect "#providerTypeTags", "providerType", "api/value_sets/2.16.840.1.113762.1.4.1026.23.json?search="
-    @setupSelect "#addressTags", "address", "api/practices/search?address="
+    @setupSelect2 "#npiTags", "api/providers/search?npi="
+    @setupSelect2 "#tinTags", "api/practices/search?tin="
+    @setupSelect2 "#providerTypeTags", "api/value_sets/2.16.840.1.113762.1.4.1026.23.json?search="
+    @setupSelect2 "#addressTags", "api/practices/search?address="
 
   display: ->
     @filterProvidersDialog.modal(
@@ -57,5 +33,10 @@ class Thorax.Views.FilterProviders extends Thorax.View
       "show" : true)
 
   submit: ->
+    filter = []
+    filter.push @getSelect2Values "#npiTags", "npi"
+    filter.push @getSelect2Values "#tinTags", "tin"
+    filter.push @getSelect2Values "#providerTypeTags", "providerType"
+    filter.push @getSelect2Values "#addressTags", "address"
     @filterProvidersDialog.modal('hide')
-    @trigger('filterSaved')
+    @trigger('filterSaved', filter)
