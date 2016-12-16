@@ -8,6 +8,7 @@ module Api
         description "This resource allows for administrative tasks to be performed on users via the API."
       end
       include PaginationHelper
+      include LogsHelper
       respond_to :json
       before_filter :authenticate_user!
       before_filter :validate_authorization!
@@ -23,6 +24,7 @@ module Api
       example '[{"_id":"53bab4134d4d31c98d0a0000","admin":null,"agree_license":null,"approved":false,"company":"","company_url":"","disabled":false,"effective_date":null,"email":"email@email.com","first_name":"fname","last_name":"lname","npi":"","registry_id":"","registry_name":"","staff_role":true,"tin":"","username":"user"}]'
       description "Returns a paginated list of all users in the database."
       def index
+        log_admin_api_call "View all users"
         users = User.all.ordered_by_username
         render json: paginate(admin_users_path,users)
       end
@@ -31,6 +33,7 @@ module Api
       param :id, String, :desc => 'The ID of the user to promote.', :required => true
       param :role, String, :desc => 'The role to promote the user to, for example staff_role or admin.', :required => true
       def promote
+        log_admin_api_call "Promote a user"
         toggle_privileges(params[:id], params[:role], :promote)
       end
 
@@ -38,24 +41,28 @@ module Api
       param :id, String, :desc => 'The ID of the user to demote.', :required => true
       param :role, String, :desc => 'The role to demote the user from, for example staff_role or admin.', :required => true
       def demote
+        log_admin_api_call "Demote a user"
         toggle_privileges(params[:id], params[:role], :demote)
       end
 
       api :GET, "/admin/users/:id/enable", "Enable a users account."
       param :id, String, :desc => 'The ID of the user to enable.', :required => true
       def enable
+        log_admin_api_call "Enable user"
         toggle_enable_disable(params[:id], 1)
       end
 
       api :GET, "/admin/users/:id/disable", "Disable a users account."
       param :id, String, :desc => 'The ID of the user to disable.', :required => true
       def disable
+        log_admin_api_call "Disable user"
         toggle_enable_disable(params[:id], 0)
       end
 
       api :GET, "/admin/users/:id/approve", "Approve a users account."
       param :id, String, :desc => 'The ID of the user to approve.', :required => true
       def approve
+        log_admin_api_call "Approve user"
         update_user(params[:id], :approved, true, "approved")
       end
 
@@ -63,6 +70,7 @@ module Api
       param :id, String, :desc => 'The ID of the user to update.', :required => true
       param :npi, String, :desc => 'The new NPI to assign the user to.', :required => true
       def update_npi
+        log_admin_api_call "Update user NPI"
         update_user(params[:id], :npi, params[:npi], "updated")
       end
 
