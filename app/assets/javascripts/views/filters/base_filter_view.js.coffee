@@ -33,6 +33,6 @@ class Thorax.Views.BaseFilterView extends Thorax.View
 
   getSelect2Values: (elementSelector, fieldName) ->
     data = { field: fieldName, items: [] }
-    $(elementSelector + " option:selected").each (item) ->
+    $(elementSelector + " option:selected").each (index, item) ->
       data.items.push({id: item.value, text: item.text })
     return data

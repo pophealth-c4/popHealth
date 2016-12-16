@@ -34,25 +34,33 @@ class Thorax.Views.MeasureView extends Thorax.LayoutView
     if (!@filterProvidersView)
       @filterProvidersView = new Thorax.Views.FilterProviders()
       @filterProvidersView.appendTo(@$el)
+      @listenTo(@filterProvidersView, 'filterSaved', @providerFilterSaved);
     @filterProvidersView.filter = @providerFilter
     @filterProvidersView.display()
-    @listenTo(@filterProvidersView, 'filterSaved', @providerFilterSaved);
     event.preventDefault()
 
   providerFilterSaved: (filter) ->
     @providerFilter = filter
+    $.post(
+      'api/queries/1/filter'
+      JSON.stringify(filter)
+    )
 
   definePatientFilterShow: (event) ->
     if (!@filterPatientsView)
       @filterPatientsView = new Thorax.Views.FilterPatients()
       @filterPatientsView.appendTo(@$el)
+      @listenTo(@filterPatientsView, 'filterSaved', @patientFilterSaved);
     @filterPatientsView.filter = @patientFilter
     @filterPatientsView.display()
-    @listenTo(@filterPatientsView, 'filterSaved', @patientFilterSaved);
     event.preventDefault()
 
   patientFilterSaved: (filter) ->
     @patientFilter = filter
+    $.post(
+      'api/queries/1/filter'
+      JSON.stringify(filter)
+    )
 
   changeFilter: (submeasure, population) ->
     if submeasure isnt @submeasure

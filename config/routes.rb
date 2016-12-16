@@ -122,6 +122,7 @@ PopHealth::Application.routes.draw do
         get :patients
         get :patient_results
         put :recalculate
+        post :filter
        end
     end
   end
