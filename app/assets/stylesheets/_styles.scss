@@ -427,3 +427,14 @@ $table-border-color: white;
     margin-left: 10px;
   }
 }
+
+#provider-filter, #patient-filter {
+  .define-filter {
+    font-style: italic;
+    padding: 10px 15px;
+  }
+}
+
+.ui-autocomplete {
+  z-index: 9999;
+}

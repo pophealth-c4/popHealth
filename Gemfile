@@ -55,6 +55,7 @@ gem 'uglifier', '~> 1.3.0'
 gem 'non-stupid-digest-assets' # support vendored non-digest assets
 gem 'jquery-datatables-rails', '3.3.0'
 gem 'jquery-ui-rails', '~> 5.0.5'
+gem 'select2-rails'
 
 group :test, :develop, :ci do
   gem 'pry'
