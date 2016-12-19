@@ -45,5 +45,5 @@ end
       })
     #MONGO_DB['provider_taxonomy'].insert({"code" => row['Code'], "grouping" => row['Grouping'], "classification" => row['Classification'], "specialization" => row['Specialization']})
   end
-  MONGO_DB['health_data_standards_svs_value_sets'].insert(provider_value_set)
+  MONGO_DB['health_data_standards_svs_value_sets'].insert_one(provider_value_set)
 ) if MONGO_DB['health_data_standards_svs_value_sets'].find({'oid' => '2.16.840.1.113762.1.4.1026.23'}).count == 0
