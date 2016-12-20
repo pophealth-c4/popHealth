@@ -14,8 +14,8 @@ GIT
     hqmf2js (1.3.0)
 
 GIT
-  remote: https://github.com/projectcypress/health-data-standards.git
-  revision: 1bb2d48cf24f6acbc12574d55f8b4f0ac8a1fb73
+  remote: https://github.com/pophealth-c4/health-data-standards.git
+  revision: b15c8bb559d131966d37814057a8ae8f47efa552
   branch: mongoid5
   specs:
     health-data-standards (3.6.1)

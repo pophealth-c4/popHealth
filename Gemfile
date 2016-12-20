@@ -8,7 +8,7 @@ gem 'mongo', '~>2.2'
 # gem 'mongoid', '~> 4.0.2'
 gem 'bson_ext', '~> 1.5.1'
 gem 'delayed_job_mongoid', github: 'collectiveidea/delayed_job_mongoid'
-gem 'health-data-standards', git: 'https://github.com/projectcypress/health-data-standards.git', branch: 'mongoid5'
+gem 'health-data-standards', git: 'https://github.com/pophealth-c4/health-data-standards.git', branch: 'mongoid5'
 
 gem 'quality-measure-engine',
     git: 'https://github.com/projectcypress/quality-measure-engine.git', branch: 'bump_mongoid'

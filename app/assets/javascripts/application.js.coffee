@@ -14,7 +14,7 @@
 #= require thorax/thorax
 #= require backbone_sync_rails
 #= require d3/d3
-#= require tag-it/js/tag-it
+#= require jquery-tagit/js/tag-it
 #
 #= require config
 #= require helpers
