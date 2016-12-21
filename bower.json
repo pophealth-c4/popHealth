@@ -14,7 +14,10 @@
     "jquery": "~1.9.1",
     "jquery-idletimer": "~0.9.2",
     "jquery-knob": "~1.2.3",
+    "jquery-ui": "^1.12.1",
     "font-awesome": "^4.7.0",
-    "jquery-placeholder": "~2.0.8"
+    "jquery-placeholder": "~2.0.8",
+    "datatables.net": "^1.10.13",
+    "jquery-tagit":"v2.0"
   }
 }

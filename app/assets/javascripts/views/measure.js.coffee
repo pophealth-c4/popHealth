@@ -18,9 +18,49 @@ class Thorax.Views.MeasureView extends Thorax.LayoutView
     else
       new Thorax.Views.QueryView model: @submeasure.getQueryForProvider(@provider_id), providerId: @provider_id
     @submeasureView = new SubmeasureView model: @submeasure, provider_id: @provider_id
+    @patientFilter = []
+    @providerFilter = []
+    @filterProvidersView = null
+    @filterPatientsView = null
+
+  events:
+    'click #define-provider-filter': 'defineProviderFilterShow'
+    'click #define-patient-filter': 'definePatientFilterShow'
 
   context: ->
     _(super).extend @submeasure.toJSON(), measurementPeriod: moment(PopHealth.currentUser.get 'effective_date' * 1000).format('YYYY')
+
+  defineProviderFilterShow: (event) ->
+    if (!@filterProvidersView)
+      @filterProvidersView = new Thorax.Views.FilterProviders()
+      @filterProvidersView.appendTo(@$el)
+      @listenTo(@filterProvidersView, 'filterSaved', @providerFilterSaved);
+    @filterProvidersView.filter = @providerFilter
+    @filterProvidersView.display()
+    event.preventDefault()
+
+  providerFilterSaved: (filter) ->
+    @providerFilter = filter
+    $.post(
+      'api/queries/1/filter'
+      JSON.stringify(filter)
+    )
+
+  definePatientFilterShow: (event) ->
+    if (!@filterPatientsView)
+      @filterPatientsView = new Thorax.Views.FilterPatients()
+      @filterPatientsView.appendTo(@$el)
+      @listenTo(@filterPatientsView, 'filterSaved', @patientFilterSaved);
+    @filterPatientsView.filter = @patientFilter
+    @filterPatientsView.display()
+    event.preventDefault()
+
+  patientFilterSaved: (filter) ->
+    @patientFilter = filter
+    $.post(
+      'api/queries/1/filter'
+      JSON.stringify(filter)
+    )
 
   changeFilter: (submeasure, population) ->
     if submeasure isnt @submeasure

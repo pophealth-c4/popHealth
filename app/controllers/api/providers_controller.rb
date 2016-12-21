@@ -13,7 +13,7 @@ module Api
     include PaginationHelper
     include LogsHelper
     # load resource must be before authorize resource
-    load_resource except: %w{index create new}
+    load_resource except: %w{index create new search}
     authorize_resource
     respond_to :json
     before_filter :authenticate_user!
@@ -137,6 +137,13 @@ module Api
       log_api_call LogAction::DELETE, "Delete a provider"
       @provider.destroy
       render json: nil, status: 204
+    end
+
+    api :GET, "/providers/search?npi=:npi&address=:address", "Search for provider by a full or partial NPI"
+    param :npi, String, :desc => "National Provider Identifier", :required => true
+    def search
+      providers = Provider.all({"cda_identifiers.root" => "2.16.840.1.113883.4.6", "cda_identifiers.extension" => /.*#{params[:npi]}.*/i })
+      render json: providers.map {|p| { id: p.id, name: "#{p.full_name} (#{p.npi})"} }
     end
 
   private
