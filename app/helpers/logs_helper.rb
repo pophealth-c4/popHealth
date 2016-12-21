@@ -5,23 +5,23 @@ module LogsHelper
     url_params_hash
   end
 
-  def log_controller_call(details, is_sensitive = false)
-    log_call details, true, false, false, is_sensitive
+  def log_controller_call(action, event, is_sensitive = false)
+    log_call action, event, "Controller - " + event, true, false, false, is_sensitive
   end
 
-  def log_api_call(details, is_sensitive = false)
-    log_call "API - " + details, true, false, true, is_sensitive
+  def log_api_call(action, event, is_sensitive = false)
+    log_call action, event, "API - " + event, true, false, true, is_sensitive
   end
 
-  def log_admin_api_call(details, is_sensitive = false)
-    log_call "Admin API - " + details, true, true, true, is_sensitive
+  def log_admin_api_call(action, event, is_sensitive = false)
+    log_call action, event, "Admin API - " + event, true, true, true, is_sensitive
   end
 
-  def log_admin_controller_call(details, is_sensitive = false)
-    log_call "Admin - " + details, true, true, false, is_sensitive
+  def log_admin_controller_call(action, event, is_sensitive = false)
+    log_call action, event, "Admin Controller - " + event, true, true, false, is_sensitive
   end
 
-  def log_call(details, controller, admin, api, is_sensitive)
+  def log_call(action, event, details, controller, admin, api, is_sensitive)
     log_config = APP_CONFIG['log_to_database']
     return if log_config.nil?
     return unless
@@ -30,10 +30,12 @@ module LogsHelper
       (log_config["api"] and api) or
       (log_config["is_sensitive"] and is_sensitive)
 
-    user = current_user || @current_user
+    user = (defined?(current_user) && current_user) ? current_user : @current_user
     Log.create(:username => user.username,
-      :event => details + (params.nil? ? '' : " Parameters: #{params.except(:action, :controller, :utf8, :authenticity_token).inspect}"),
-      :medical_record_number => (@patient.nil? ? nil : @patient.medical_record_number))
+      :action => action, :event => event,
+      :description => details + (params.nil? ? '' : " Parameters: #{params.except(:action, :controller, :utf8, :authenticity_token).inspect}"),
+      :medical_record_number => (@patient.nil? ? nil : @patient.medical_record_number),
+      :affected_user => (@user.nil? ? nil : @user.username))
   end
 
   def get_errors_for_log(item)

@@ -13,7 +13,7 @@ class PracticesController < ApplicationController
   end
   
   def index
-    log_controller_call "View all practices"
+    log_controller_call LogAction::VIEW, "View all practices"
     @practices = Practice.all
 		@practice = Practice.new
 		@users = User.all.map {|user| [user.username, user.id]}
@@ -26,7 +26,7 @@ class PracticesController < ApplicationController
   # GET /practices/1
   # GET /practices/1.json
   def show
-    log_controller_call "View practice"
+    log_controller_call LogAction::VIEW, "View practice"
     @practice = Practice.find(params[:id])
     @users = User.all.map {|user| [user.username, user.id]}
     if @practice.nil?
@@ -45,7 +45,7 @@ class PracticesController < ApplicationController
   # POST /practices
   # POST /practices.json
   def create
-    log_controller_call "Create practice"
+    log_controller_call LogAction::ADD, "Create practice"
     @practice = Practice.new(params[:practice])
 
     if @practice.save
@@ -82,11 +82,11 @@ class PracticesController < ApplicationController
 
     respond_to do |format|
       if @practice.save
-        log_controller_call "Update practice"
+        log_controller_call LogAction::UPDATE, "Update practice"
         format.html { redirect_to practices_path, notice: 'Practice was successfully updated.' }
         format.json { render json: @practice, status: :created, location: @practice }
       else
-        log_controller_call "Failed to update practice, with errors #{get_errors_for_log(@practice)}"
+        log_controller_call LogAction::UPDATE, "Failed to update practice, with errors #{get_errors_for_log(@practice)}"
         format.html { redirect_to practices_path }
         format.json { render json: @practice.errors, status: :unprocessable_entity }
       end
@@ -94,7 +94,7 @@ class PracticesController < ApplicationController
   end
   
   def remove_patients
-    log_controller_call "Remove all patients for practice", true
+    log_controller_call LogAction::DELETE, "Remove all patients for practice", true
     Record.where(practice_id: params[:id]).delete
     respond_to do |format|
       format.html { redirect_to :action => :index }
@@ -102,7 +102,7 @@ class PracticesController < ApplicationController
   end
   
   def remove_providers
-    log_controller_call "Remove all providers for practice"
+    log_controller_call LogAction::DELETE, "Remove all providers for practice"
     practice = Practice.find(params[:id])
     Provider.where(parent_id: practice.provider.id).delete
     
@@ -114,7 +114,7 @@ class PracticesController < ApplicationController
   # DELETE /practices/1
   # DELETE /practices/1.json
   def destroy
-    log_controller_call "Remove practice"
+    log_controller_call LogAction::DELETE, "Remove practice"
     @practice = Practice.find(params[:id])
     Record.where(practice_id: @practice.id).delete
     if @practice.provider

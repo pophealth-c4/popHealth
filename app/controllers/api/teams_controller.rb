@@ -23,7 +23,7 @@ module Api
       This will return the list of the current user's teams.
     SDESC
     def index
-      log_api_call "View all teams"
+      log_api_call LogAction::VIEW, "View all teams"
       @teams = @current_user.teams
       validate_authorization!(@teams)
       render json: @teams
@@ -35,7 +35,7 @@ module Api
       This will return an individual team based on the given ID
     SDESC
     def show
-      log_api_call "Show team"
+      log_api_call LogAction::VIEW, "Show team"
       @team = Team.find(params[:id])
       validate_authorization!([@team])
       render json: @team.to_json 
@@ -47,7 +47,7 @@ module Api
       This will return the list of providers for a given team based on the ID 
     SDESC
     def team_providers
-      log_api_call "Get providers for team"
+      log_api_call LogAction::VIEW, "Get providers for team"
       @team = Team.find(params[:id])
       validate_authorization!([@team])
       providers = @team.providers.map {|id| Provider.find(id)}

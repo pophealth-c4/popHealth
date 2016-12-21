@@ -14,7 +14,7 @@ module Api
     api :GET, "/practices/:id", "Get the practice information"
     formats ['json']
     def show
-      log_api_call "View practice"
+      log_api_call LogAction::VIEW, "View practice"
       practice = Practice.find(params[:id])
       render :json => practice.as_json
     end
@@ -22,7 +22,7 @@ module Api
     api :GET, "/practices", "Get all practice information"
     formats ['json']
     def index
-      log_api_call "View all practices"
+      log_api_call LogAction::VIEW, "View all practices"
       practices = Practice.all
       render :json => practices.as_json
     end  
@@ -49,9 +49,9 @@ module Api
           user.save
         end
         @practice.save!
-        log_api_call "Created practice"
+        log_api_call LogAction::ADD, "Created practice"
       else
-        log_api_call "Failed to create practice, with errors #{get_errors_for_log(@practice)}"
+        log_api_call LogAction::ADD, "Failed to create practice, with errors #{get_errors_for_log(@practice)}"
         @practice = nil
       end
       render :json => @practice

@@ -14,7 +14,7 @@ module Api
       api :GET, "/admin/caches/count", "Return count of caches in the database."
       example '{"query_cache_count":56, "patient_cache_count":100}'
       def count
-        log_admin_api_call "Count of caches"
+        log_admin_api_call LogAction::VIEW, "Count of caches"
         json = {}
         json['query_cache_count'] = HealthDataStandards::CQM::QueryCache.count
         json['patient_cache_count'] = PatientCache.count
@@ -23,7 +23,7 @@ module Api
 
       api :DELETE, "/admin/caches", "Empty all caches in the database."
       def destroy
-        log_admin_api_call "Empty all caches"
+        log_admin_api_call LogAction::DELETE, "Empty all caches"
         HealthDataStandards::CQM::QueryCache.delete_all
         PatientCache.delete_all
         render status: 200, text: 'Server caches have been emptied.'

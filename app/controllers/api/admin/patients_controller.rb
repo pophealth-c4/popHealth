@@ -18,7 +18,7 @@ module Api
       formats ['json']
       example '{"patient_count":56}'
       def count
-        log_admin_api_call "Get patient count"
+        log_admin_api_call LogAction::VIEW, "Get patient count"
         json = {}
         json['patient_count'] = Record.count
         render :json => json
@@ -30,7 +30,7 @@ module Api
       param :practice_name, String, :desc => "Name for the patient's Practice", :required => false
 
       def create
-        log_admin_api_call "Upload patient ZIP file", true
+        log_admin_api_call LogAction::ADD, "Upload patient ZIP file", true
         file = params[:file]
 
         practice = get_practice_parameter(params[:practice_id], params[:practice_name])
@@ -49,7 +49,7 @@ module Api
 
       api :DELETE, "/admin/patients", "Delete all patients in the database."
       def destroy
-        log_admin_api_call "Delete all patients", true
+        log_admin_api_call LogAction::DELETE, "Delete all patients", true
         Record.delete_all
         render status: 200, text: 'Patient records successfully removed from database.'
       end
@@ -61,7 +61,7 @@ module Api
       param :practice_name, String, :desc => "Name for the patient's Practice", :required => false
       description "Upload a single XML file for a patient into popHealth."
       def upload_single_patient
-        log_admin_api_call "Upload single patient", true
+        log_admin_api_call LogAction::ADD, "Upload single patient", true
 
         file = StringIO.new(request.body.read)
         practice = get_practice_parameter(params[:practice_id], params[:practice_name])

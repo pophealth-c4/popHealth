@@ -22,11 +22,11 @@ module Api
     param_group :pagination, Api::PatientsController
     def index
       if APP_CONFIG['use_opml_structure']
-        log_api_call "Get list of providers, using OPML"
+        log_api_call LogAction::VIEW, "Get list of providers, using OPML"
         @providers = Provider.all
         authorize_providers(@providers)
       elsif current_user.admin?
-        log_api_call "Get list of providers for admin"
+        log_api_call LogAction::VIEW, "Get list of providers for admin"
         providers = Provider.all
         authorize_providers(providers)
         @providers = providers.map do |p|
@@ -35,7 +35,7 @@ module Api
           p_json
         end
       else
-        log_api_call "Get list of providers"
+        log_api_call LogAction::VIEW, "Get list of providers"
         @providers = Provider.where(parent_id: current_user.practice.provider_id)
         authorize_providers(@providers)
       end
@@ -104,9 +104,9 @@ module Api
         provider_json[:parent] = Provider.find(@provider.parent_id) if @provider.parent_id
         provider_json[:children] = @provider.children if @provider.children.present?
         provider_json[:patient_count] = @provider.records.count
-        log_api_call "View provider", true
+        log_api_call LogAction::VIEW, "View provider", true
       else
-        log_api_call "Failed to view provider", true
+        log_api_call LogAction::VIEW, "Failed to view provider", true
         provider_json = {}
       end
       render json: provider_json
@@ -114,7 +114,7 @@ module Api
 
     api :POST, "/providers", "Create a new provider"
     def create
-      log_api_call "Create a new provider"
+      log_api_call LogAction::ADD, "Create a new provider"
       @provider = Provider.create(params[:provider])
       render json: @provider
     end
@@ -122,7 +122,7 @@ module Api
     api :PUT, "/providers/:id", "Update a provider"
     param :id, String, :desc => "Provider ID", :required => true
     def update
-      log_api_call "Update a provider"
+      log_api_call LogAction::UPDATE, "Update a provider"
       @provider.update_attributes!(params[:provider])
       render json: @provider
     end
@@ -134,7 +134,7 @@ module Api
     api :DELETE, "/providers/:id", "Remove an individual provider"
     param :id, String, :desc => "Provider ID", :required => true
     def destroy
-      log_api_call "Delete a provider"
+      log_api_call LogAction::DELETE, "Delete a provider"
       @provider.destroy
       render json: nil, status: 204
     end
