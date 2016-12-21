@@ -115,21 +115,26 @@ module Api
     api :PUT, '/queries/:id/recalculate', "Force a clinical quality measure to recalculate"
     param :id, String, :desc => 'The id of the quality measure calculation', :required => true
     def recalculate
-      qr = QME::QualityReport.find(params[:id])
-      authorize! :recalculate , qr
-      qr.calculate({"oid_dictionary" =>OidHelper.generate_oid_dictionary(qr.measure_id),
+      QME::QualityReport.where(measure_id:params[:id]).each do |qc|
+        authorize! :recalculate , qc
+        # add filters here
+        qc.calculate({"oid_dictionary" =>OidHelper.generate_oid_dictionary(qr.measure_id),
                      'recalculate' =>true}, true)
-      render json: qr
+        end
+      # render json: qc
     end
 
     api :POST, '/queries/:id/filter', "Apply a filter to an existing measure calculation"
     param :id, String, :desc => 'The id of the quality measure calculation', :required => true
     def filter
-      qr = QME::QualityReport.find(params[:id])
-      authorize! :recalculate , qr
-      qr.calculate({"oid_dictionary" =>OidHelper.generate_oid_dictionary(qr.measure_id),
-                     'recalculate' =>true}, true)
-      render json: qr
+      QME::QualityReport.where(measure_id:params[:id]).each do |qc|
+        authorize! :recalculate , qc
+        # add filters here
+
+        qc.calculate({"oid_dictionary" =>OidHelper.generate_oid_dictionary(qr.measure_id),
+                      'recalculate' =>true}, true)
+      end
+      # render json: qr
     end
 
     api :GET, '/queries/:id/patient_results[?population=true|false]',

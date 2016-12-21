@@ -42,7 +42,7 @@ class Thorax.Views.MeasureView extends Thorax.LayoutView
   providerFilterSaved: (filter) ->
     @providerFilter = filter
     $.post(
-      'api/queries/1/filter'
+      'api/queries/'+this.submeasure.attributes.id+'/filter'
       JSON.stringify(filter)
     )
 
@@ -58,7 +58,7 @@ class Thorax.Views.MeasureView extends Thorax.LayoutView
   patientFilterSaved: (filter) ->
     @patientFilter = filter
     $.post(
-      'api/queries/1/filter'
+      'api/queries/'+this.submeasure.attributes.id+'/filter'
       JSON.stringify(filter)
     )
 
