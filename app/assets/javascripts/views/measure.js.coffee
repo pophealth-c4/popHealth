@@ -55,11 +55,14 @@ class Thorax.Views.MeasureView extends Thorax.LayoutView
     @filterPatientsView.display()
     event.preventDefault()
 
+
   patientFilterSaved: (filter) ->
+    json={}
     @patientFilter = filter
+    (json[item.field] = item.items if item.items and item.items.length) for item in filter
     $.post(
       'api/queries/'+this.submeasure.attributes.id+'/filter'
-      JSON.stringify(filter)
+      $.param(json)
     )
 
   changeFilter: (submeasure, population) ->

@@ -36,8 +36,8 @@ class Thorax.Views.FilterPatients extends Thorax.Views.BaseFilterView
   submit: ->
     filter = []
     filter.push @getSelect2Values "#payerTags", "payer"
-    filter.push @getSelect2Values "#raceTags", "race"
-    filter.push @getSelect2Values "#ethnicityTags", "ethnicity"
+    filter.push @getSelect2Values "#raceTags", "races"
+    filter.push @getSelect2Values "#ethnicityTags", "ethnicities"
     filter.push @getSelect2Values "#problemListTags", "problemList"
     @filterPatientsDialog.modal('hide')
     @trigger('filterSaved', filter)

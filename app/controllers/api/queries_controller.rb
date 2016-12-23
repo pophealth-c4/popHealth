@@ -1,5 +1,5 @@
 module Api
-  class QueriesController  < ApplicationController
+  class QueriesController < ApplicationController
     resource_description do
       short 'Queries'
       formats ['json']
@@ -12,7 +12,7 @@ module Api
     include PaginationHelper
     skip_authorization_check
     before_filter :authenticate_user!
-    before_filter :set_pagination_params, :only=>[:patient_results, :patients]
+    before_filter :set_pagination_params, :only => [:patient_results, :patients]
 
     def index
       filter = {}
@@ -26,19 +26,20 @@ module Api
     param :id, String, :desc => 'The id of the quality measure calculation', :required => true
     example '{"DENEX":0,"DENEXCEP":0,"DENOM":5,"IPP":5,"MSRPOPL":0,"NUMER":0,  "status":{"state":"completed", ...}, ...}'
     description "Gets a clinical quality measure calculation. If calculation is completed, the response will include the results."
+
     def show
       @qr = QME::QualityReport.find(params[:id])
 
-      if current_user.preferences.show_aggregate_result && !@qr.aggregate_result && !APP_CONFIG['use_opml_structure'] 
+      if current_user.preferences.show_aggregate_result && !@qr.aggregate_result && !APP_CONFIG['use_opml_structure']
         cv = @qr.measure.continuous_variable
-        aqr = QME::QualityReport.where(measure_id: @qr.measure_id, sub_id: @qr.sub_id, 'filters.providers' => [Provider.root._id.to_s], effective_date: @qr.effective_date).first  	           
+        aqr = QME::QualityReport.where(measure_id: @qr.measure_id, sub_id: @qr.sub_id, 'filters.providers' => [Provider.root._id.to_s], effective_date: @qr.effective_date).first
         if aqr.result
-          if cv 
+          if cv
             @qr.aggregate_result = aqr.result.OBSERV
           else
-            @qr.aggregate_result = (aqr.result.DENOM > 0)? (100*((aqr.result.NUMER).to_f / (aqr.result.DENOM - aqr.result.DENEXCEP - aqr.result.DENEX).to_f)).round : 0
+            @qr.aggregate_result = (aqr.result.DENOM > 0) ? (100*((aqr.result.NUMER).to_f / (aqr.result.DENOM - aqr.result.DENEXCEP - aqr.result.DENEX).to_f)).round : 0
           end
-	        @qr.save!
+          @qr.save!
         end
       end
 
@@ -48,9 +49,9 @@ module Api
 
     api :POST, '/queries', "Start a clinical quality measure calculation"
     param :measure_id, String, :desc => 'The HQMF id for the CQM to calculate', :required => true
-    param :sub_id, String, :desc => 'The sub id for the CQM to calculate. This is popHealth specific.', :required => false,:allow_nil => true
-    param :effective_date, ->(effective_date){ effective_date.present? }, :desc => 'Time in seconds since the epoch for the end date of the reporting period', :required => true
-    param :effective_start_date, ->(effective_start_date){ effective_start_date.present? }, :desc => 'Time in seconds since the epoch for the start date of the reporting period'
+    param :sub_id, String, :desc => 'The sub id for the CQM to calculate. This is popHealth specific.', :required => false, :allow_nil => true
+    param :effective_date, ->(effective_date) { effective_date.present? }, :desc => 'Time in seconds since the epoch for the end date of the reporting period', :required => true
+    param :effective_start_date, ->(effective_start_date) { effective_start_date.present? }, :desc => 'Time in seconds since the epoch for the start date of the reporting period'
     param :providers, Array, :desc => 'An array of provider IDs to filter the query by', :allow_nil => true
     example '{"_id":"52fe409bb99cc8f818000001", "status":{"state":"queued", ...}, ...}'
     description <<-CDESC
@@ -59,10 +60,11 @@ module Api
       the status property of the returned JSON. If it is calculating, then the results may be obtained by the
       GET action with the id.
     CDESC
+
     def create
       options = {}
       options[:filters] = build_filter
-      
+
       authorize_providers
       end_date = params[:effective_date]
       start_date = params[:effective_start_date]
@@ -75,28 +77,28 @@ module Api
       rp = ReportingPeriod.where(start_date: start_date, end_date: end_date).first_or_create
       rp.save!
 
-	    options[:start_date] = start_date
+      options[:start_date] = start_date
       options[:effective_date] = end_date
       options[:test_id] = rp._id
       options['prefilter'] = build_mr_prefilter if APP_CONFIG['use_map_reduce_prefilter']
-      
+
       qr = QME::QualityReport.find_or_create(params[:measure_id],
-                                           params[:sub_id], options)
+                                             params[:sub_id], options)
       if !qr.calculated?
-        qr.calculate( {"oid_dictionary" =>OidHelper.generate_oid_dictionary(qr.measure),
-          "enable_rationale" => APP_CONFIG['enable_map_reduce_rationale'] || false,
-          "enable_logging" => APP_CONFIG['enable_map_reduce_logging'] || false}, true)
+        qr.calculate({"oid_dictionary" => OidHelper.generate_oid_dictionary(qr.measure),
+                      "enable_rationale" => APP_CONFIG['enable_map_reduce_rationale'] || false,
+                      "enable_logging" => APP_CONFIG['enable_map_reduce_logging'] || false}, true)
       end
 
       if current_user.preferences.show_aggregate_result && !APP_CONFIG['use_opml_structure']
         agg_options = options.clone
         agg_options[:filters][:providers] = [Provider.root._id.to_s]
         aqr = QME::QualityReport.find_or_create(params[:measure_id],
-                                           params[:sub_id], agg_options)
+                                                params[:sub_id], agg_options)
         if !aqr.calculated?
-          aqr.calculate( {"oid_dictionary" =>OidHelper.generate_oid_dictionary(aqr.measure),
-          "enable_rationale" => APP_CONFIG['enable_map_reduce_rationale'] || false,
-          "enable_logging" => APP_CONFIG['enable_map_reduce_logging'] || false}, true)
+          aqr.calculate({"oid_dictionary" => OidHelper.generate_oid_dictionary(aqr.measure),
+                         "enable_rationale" => APP_CONFIG['enable_map_reduce_rationale'] || false,
+                         "enable_logging" => APP_CONFIG['enable_map_reduce_logging'] || false}, true)
         end
       end
 
@@ -105,40 +107,52 @@ module Api
 
     api :DELETE, '/queries/:id', "Remove clinical quality measure calculation"
     param :id, String, :desc => 'The id of the quality measure calculation', :required => true
+
     def destroy
       qr = QME::QualityReport.find(params[:id])
       authorize! :delete, qr
       qr.destroy
-      render :status=> 204, :text=>""
+      render :status => 204, :text => ""
     end
 
     api :PUT, '/queries/:id/recalculate', "Force a clinical quality measure to recalculate"
     param :id, String, :desc => 'The id of the quality measure calculation', :required => true
+
     def recalculate
-      QME::QualityReport.where(measure_id:params[:id]).each do |qc|
-        authorize! :recalculate , qc
-        # add filters here
-        qc.calculate({"oid_dictionary" =>OidHelper.generate_oid_dictionary(qr.measure_id),
-                     'recalculate' =>true}, true)
-        end
-      # render json: qc
+      qr = QME::QualityReport.find(params[:id])
+      authorize! :recalculate, qr
+      qr.calculate({"oid_dictionary" => OidHelper.generate_oid_dictionary(qr.measure_id),
+                    'recalculate' => true}, true)
+      render json: qr
     end
 
     api :POST, '/queries/:id/filter', "Apply a filter to an existing measure calculation"
     param :id, String, :desc => 'The id of the quality measure calculation', :required => true
-    def filter
-      QME::QualityReport.where(measure_id:params[:id]).each do |qc|
-        authorize! :recalculate , qc
-        # add filters here
 
-        qc.calculate({"oid_dictionary" =>OidHelper.generate_oid_dictionary(qr.measure_id),
-                      'recalculate' =>true}, true)
+    def filter
+      lastqc=nil
+      QME::QualityReport.where(measure_id: params[:id]).each do |qc|
+        authorize! :recalculate, qc
+        # add filters here
+        params.each_pair do |key, value|
+          if not /controller|action|id/.match(key)
+            res=[]
+            (0...value.length).each do |i|
+              res.push(value[i.to_s][:id])
+            end
+            qc.filters[key]=res
+          end
+        end
+
+        qc.calculate({"oid_dictionary" => OidHelper.generate_oid_dictionary(qc.measure_id),
+                      'recalculate' => true}, true)
+        lastqc=qc
       end
-      # render json: qr
+      render json: lastqc
     end
 
     api :GET, '/queries/:id/patient_results[?population=true|false]',
-              "Retrieve patients relevant to a clinical quality measure calculation"
+        "Retrieve patients relevant to a clinical quality measure calculation"
     param :id, String, :desc => 'The id of the quality measure calculation', :required => true
     param :ipp, /true|false/, :desc => 'Ensure patients meet the initial patient population for the measure', :required => false
     param :denom, /true|false/, :desc => 'Ensure patients meet the denominator for the measure', :required => false
@@ -154,12 +168,13 @@ module Api
       to specific populations, such as only patients that have made it into the numerator by passing in a query parameter for a particular
       population. Results are paginated.
     PRDESC
+
     def patient_results
       qr = QME::QualityReport.find(params[:id])
       authorize! :read, qr
       # this returns a criteria object so we can filter it additionally as needed
       results = qr.patient_results
-      render json: paginate(patient_results_api_query_url(qr),results.where(build_patient_filter).only('_id', 'value.medical_record_id', 'value.first', 'value.last', 'value.birthdate', 'value.gender', 'value.patient_id'))
+      render json: paginate(patient_results_api_query_url(qr), results.where(build_patient_filter).only('_id', 'value.medical_record_id', 'value.first', 'value.last', 'value.birthdate', 'value.gender', 'value.patient_id'))
     end
 
     def patients
@@ -167,12 +182,12 @@ module Api
       authorize! :read, qr
       # this returns a criteria object so we can filter it additionally as needed
       results = qr.patient_results
-      ids = paginate(patients_api_query_url(qr),results.where(build_patient_filter).order_by([:last.asc, :first.asc])).collect{|r| r["value.medical_record_id"]}
-      render :json=> Record.where({:medical_record_number.in => ids})
+      ids = paginate(patients_api_query_url(qr), results.where(build_patient_filter).order_by([:last.asc, :first.asc])).collect { |r| r["value.medical_record_id"] }
+      render :json => Record.where({:medical_record_number.in => ids})
     end
 
 
-  private
+    private
     def build_filter
       @filter = params.select { |k, v| %w(providers).include? k }.to_options
     end
@@ -193,7 +208,7 @@ module Api
     end
 
     def build_mr_prefilter
-      measure = HealthDataStandards::CQM::Measure.where({"hqmf_id" => params[:measure_id], "sub_id"=>params[:sub_id]}).first
+      measure = HealthDataStandards::CQM::Measure.where({"hqmf_id" => params[:measure_id], "sub_id" => params[:sub_id]}).first
       measure.prefilter_query!(params[:effective_date].to_i)
       measure.prefilter_query!(params[:effective_start_date].to_i)
     end
