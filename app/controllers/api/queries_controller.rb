@@ -128,7 +128,6 @@ module Api
 
     api :POST, '/queries/:id/filter', "Apply a filter to an existing measure calculation"
     param :id, String, :desc => 'The id of the quality measure calculation', :required => true
-
     def filter
       lastqc=nil
       QME::QualityReport.where(measure_id: params[:id]).each do |qc|
@@ -143,12 +142,17 @@ module Api
             qc.filters[key]=res
           end
         end
-
-        qc.calculate({"oid_dictionary" => OidHelper.generate_oid_dictionary(qc.measure_id),
-                      'recalculate' => true}, true)
+        results = qc.patient_results
+        #qc.calculate({"oid_dictionary" => OidHelper.generate_oid_dictionary(qc.measure_id),
+         #            'recalculate' => true}, true)
         lastqc=qc
       end
-      render json: lastqc
+      if lastqc
+        render json: paginate(patient_results_api_query_url(lastqc),
+                              results.where(build_patient_filter).only('_id', 'value.medical_record_id',
+                                                                       'value.first', 'value.last', 'value.birthdate',
+                                                                       'value.gender', 'value.patient_id'))
+      end
     end
 
     api :GET, '/queries/:id/patient_results[?population=true|false]',
