@@ -14,6 +14,26 @@ module Api
     before_filter :authenticate_user!
     before_filter :set_pagination_params, :only => [:patient_results, :patients]
 
+    @@filter_mapping = {
+        'ethnicities' => lambda{ |id|
+          eth = $mongo_client.database.collection('health_data_standards_svs_value_sets')
+                    .find({"concepts._id":BSON::ObjectId("#{id}")}).projection({"concepts.$":1}).first
+          if !eth.nil?
+            eth['concepts'][0]['code']
+          end
+        }
+        # ,
+        #     :races => Race,
+        #     :payer => Provider,
+        #     :age  =>  Patient,
+        #     :gender => Patient,
+        #     :problemList => Patient,
+        #     :npi => Provider,
+        #     :tin => Provider,
+        #     :providerType => Provider,
+        #     :address => Provider
+    }
+
     def index
       filter = {}
       filter["hqmf_id"] = {"$in" => params["measure_ids"]} if params["measure_ids"]
@@ -126,6 +146,13 @@ module Api
       render json: qr
     end
 
+
+    def resolveGender
+
+    end
+    def resolveAge
+
+    end
     api :POST, '/queries/:id/filter', "Apply a filter to an existing measure calculation"
     param :id, String, :desc => 'The id of the quality measure calculation', :required => true
     def filter
@@ -137,7 +164,9 @@ module Api
           if not /controller|action|id/.match(key)
             res=[]
             (0...value.length).each do |i|
-              res.push(value[i.to_s][:id])
+              if @@filter_mapping[key]
+                res.push(@@filter_mapping[key].call(value[i.to_s][:id]))
+              end
             end
             qc.filters[key]=res
           end
@@ -149,7 +178,7 @@ module Api
       end
       if lastqc
         render json: paginate(patient_results_api_query_url(lastqc),
-                              results.where(build_patient_filter).only('_id', 'value.medical_record_id',
+                              lastqc.patient_results.where(build_patient_filter).only('_id', 'value.medical_record_id',
                                                                        'value.first', 'value.last', 'value.birthdate',
                                                                        'value.gender', 'value.patient_id'))
       end
