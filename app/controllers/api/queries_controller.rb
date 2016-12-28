@@ -1,3 +1,5 @@
+require 'cypress/record_filter.rb'
+
 module Api
   class QueriesController < ApplicationController
     resource_description do
@@ -14,25 +16,64 @@ module Api
     before_filter :authenticate_user!
     before_filter :set_pagination_params, :only => [:patient_results, :patients]
 
+    def self.get_svs_value(key, id)
+      val = $mongo_client.database.collection('health_data_standards_svs_value_sets')
+                .find({"concepts._id": BSON::ObjectId("#{id}")}).projection({"concepts.$": 1}).first
+      if !val.nil?
+        val['concepts'][0]['code']
+      end
+    end
+
     @@filter_mapping = {
-        'ethnicities' => lambda{ |id|
-          eth = $mongo_client.database.collection('health_data_standards_svs_value_sets')
-                    .find({"concepts._id":BSON::ObjectId("#{id}")}).projection({"concepts.$":1}).first
-          if !eth.nil?
-            eth['concepts'][0]['code']
+        'ethnicities' => method(:get_svs_value),
+        'races' => method(:get_svs_value),
+        'payers' => method(:get_svs_value),
+        'problems' => method(:get_svs_value),
+        #,
+        'age' => Proc.new { |key, id, txt|
+          res={}
+          m = /(>=?)\s*(\d+)/.match(txt) or /(<=?)\s*(\d+)/.match(txt)
+          unless m.nil?
+            n=m[2].to_i # to_i?
+            case m[1]
+              when '<'
+                res['max'] = n-1
+              when '<='
+                res['max'] = n
+              when '>'
+                res['min'] = n+1
+              when '>='
+                res['min'] = n
+            end
+            return res
           end
-        }
-        # ,
-        #     :races => Race,
-        #     :payer => Provider,
-        #     :age  =>  Patient,
+          # OR
+          m= /^\s*(\d+)\s*-+\s*(\d+)/.match(txt)
+          unless m.nil?
+            res['min'] = m[1]
+            res['max'] = m[2]
+            return res
+          end
+          puts "ERROR: Bad input to age:#{txt}"
+        },
         #     :gender => Patient,
-        #     :problemList => Patient,
-        #     :npi => Provider,
+        # 'problems' => Proc.new { |key, id|
+        #   res=[]
+        #   val = $mongo_client.database.collection('health_data_standards_svs_value_sets')
+        #             .find({_id: BSON::ObjectId("#{id}")}).first
+        #   if not val.nil?
+        #     val['concepts'].each do |v|
+        #       res.push(v['code'])
+        #     end
+        #   end
+        #   res
+        # }
+        # npis =>
         #     :tin => Provider,
         #     :providerType => Provider,
         #     :address => Provider
     }
+
 
     def index
       filter = {}
@@ -150,39 +191,54 @@ module Api
     def resolveGender
 
     end
+
     def resolveAge
 
     end
+
     api :POST, '/queries/:id/filter', "Apply a filter to an existing measure calculation"
     param :id, String, :desc => 'The id of the quality measure calculation', :required => true
+
     def filter
       lastqc=nil
-      QME::QualityReport.where(measure_id: params[:id]).each do |qc|
-        authorize! :recalculate, qc
+      filters={}
+      #QME::QualityReport.where(measure_id: params[:id]).each do |qc|
+      #authorize! :recalculate, qc
         # add filters here
-        params.each_pair do |key, value|
-          if not /controller|action|id/.match(key)
-            res=[]
+      params.each_pair do |key, value|
+        if not /controller|action|id/.match(key)
+          res=[]
+          if @@filter_mapping[key]
             (0...value.length).each do |i|
-              if @@filter_mapping[key]
-                res.push(@@filter_mapping[key].call(value[i.to_s][:id]))
-              end
+              res.push(@@filter_mapping[key].call(key, value[i.to_s][:id]))
             end
-            qc.filters[key]=res
+            filters[key]=res
+          else
+            value = [value] unless value.is_a?(Array)
+            filters[key] = value
           end
         end
-        results = qc.patient_results
-        #qc.calculate({"oid_dictionary" => OidHelper.generate_oid_dictionary(qc.measure_id),
-         #            'recalculate' => true}, true)
-        lastqc=qc
       end
-      if lastqc
-        render json: paginate(patient_results_api_query_url(lastqc),
-                              lastqc.patient_results.where(build_patient_filter).only('_id', 'value.medical_record_id',
-                                                                       'value.first', 'value.last', 'value.birthdate',
-                                                                       'value.gender', 'value.patient_id'))
-      end
+
+      #now do something with filters
+      # todo: Date.new should be replaced by meaningful
+      # todo: :bundle_id in options Is there only ever one bundle
+      bundle=Bundle.first
+      pcache = PatientCache.first
+      records = Cypress::RecordFilter.filter(Record, filters, {
+          :effective_date => pcache ? pcache['value']['effective_date'] : bundle.effective_date, :bundle_id => bundle._id })
+      #results = qc.patient_results
+      #qc.calculate({"oid_dictionary" => OidHelper.generate_oid_dictionary(qc.measure_id),
+      #            'recalculate' => true}, true)
+      #lastqc=qc
     end
+    #if lastqc
+#      render json: paginate(patient_results_api_query_url(lastqc),
+#                             lastqc.patient_results.where(build_patient_filter).only('_id', 'value.medical_record_id',
+#                                                                                     'value.first', 'value.last', 'value.birthdate',
+#                                                                                     'value.gender', 'value.patient_id'))
+#     end
+
 
     api :GET, '/queries/:id/patient_results[?population=true|false]',
         "Retrieve patients relevant to a clinical quality measure calculation"

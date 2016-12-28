@@ -36,3 +36,18 @@ class Thorax.Views.BaseFilterView extends Thorax.View
     $(elementSelector + " option:selected").each (index, item) ->
       data.items.push({id: item.value, text: item.text })
     return data
+
+
+  getText: (elementSelector, fieldName)->
+    txt= $(elementSelector).text()
+    return {field: fieldName, items : if txt?.length then [txt] else []}
+
+  getGender: ()->
+      res = {field : "genders" , items: []}
+      # got to be a better way to handle checkboxes
+      m=$('#male')[0]
+      f=$('#female')[0]
+      res.items.push(m.value) if m.checked
+      res.items.push(f.value) if f.checked
+      return res
+

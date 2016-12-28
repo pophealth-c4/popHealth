@@ -24,7 +24,8 @@ class Thorax.Views.FilterPatients extends Thorax.Views.BaseFilterView
     @setupSelect2 "#payerTags", "api/value_sets/2.16.840.1.114222.4.11.3591.json?search="
     @setupSelect2 "#raceTags", "api/value_sets/2.16.840.1.114222.4.11.836.json?search="
     @setupSelect2 "#ethnicityTags", "api/value_sets/2.16.840.1.114222.4.11.837.json?search="
-    @setupSelect2 "#problemListTags", "api/value_sets/measure"
+    @setupSelect2 "#problemListTags", "api/value_sets/xxx.json?search="
+    @setupTagIt "#genderTags", ""
     @setupTagIt "#ageTags", "e.g. 18-25, >=30"
 
   display: ->
@@ -35,9 +36,11 @@ class Thorax.Views.FilterPatients extends Thorax.Views.BaseFilterView
 
   submit: ->
     filter = []
-    filter.push @getSelect2Values "#payerTags", "payer"
+    filter.push @getSelect2Values "#payerTags", "payers"
     filter.push @getSelect2Values "#raceTags", "races"
     filter.push @getSelect2Values "#ethnicityTags", "ethnicities"
-    filter.push @getSelect2Values "#problemListTags", "problemList"
+    filter.push @getSelect2Values "#problemListTags", "problems"
+    filter.push  @getText "#ageTags", "age"
+    filter.push @getGender()
     @filterPatientsDialog.modal('hide')
     @trigger('filterSaved', filter)
