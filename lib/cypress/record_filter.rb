@@ -12,7 +12,9 @@ module Cypress
       end
 
       if input_filters['age']
-        query_pieces << build_age_query(input_filters['age'], options)
+        input_filters['age'].each do |f|
+          query_pieces << build_age_query(f, options)
+        end
       end
 
       if input_filters['problems']

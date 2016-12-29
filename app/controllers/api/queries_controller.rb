@@ -16,7 +16,8 @@ module Api
     before_filter :authenticate_user!
     before_filter :set_pagination_params, :only => [:patient_results, :patients]
 
-    def self.get_svs_value(key, id)
+    def self.get_svs_value(key, cval)
+      id = cval[:id]
       val = $mongo_client.database.collection('health_data_standards_svs_value_sets')
                 .find({"concepts._id": BSON::ObjectId("#{id}")}).projection({"concepts.$": 1}).first
       if !val.nil?
@@ -30,7 +31,7 @@ module Api
         'payers' => method(:get_svs_value),
         'problems' => method(:get_svs_value),
         #,
-        'age' => Proc.new { |key, id, txt|
+        'age' => Proc.new { |key, txt|
           res={}
           m = /(>=?)\s*(\d+)/.match(txt) or /(<=?)\s*(\d+)/.match(txt)
           unless m.nil?
@@ -45,14 +46,15 @@ module Api
               when '>='
                 res['min'] = n
             end
-            return res
+            # ruby is SOOO baroque
+            next res
           end
           # OR
           m= /^\s*(\d+)\s*-+\s*(\d+)/.match(txt)
           unless m.nil?
             res['min'] = m[1]
             res['max'] = m[2]
-            return res
+            next res
           end
           puts "ERROR: Bad input to age:#{txt}"
         },
@@ -210,7 +212,7 @@ module Api
           res=[]
           if @@filter_mapping[key]
             (0...value.length).each do |i|
-              res.push(@@filter_mapping[key].call(key, value[i.to_s][:id]))
+              res.push(@@filter_mapping[key].call(key, value[i]))
             end
             filters[key]=res
           else
@@ -225,8 +227,13 @@ module Api
       # todo: :bundle_id in options Is there only ever one bundle
       bundle=Bundle.first
       pcache = PatientCache.first
+      mrns = []
       records = Cypress::RecordFilter.filter(Record, filters, {
           :effective_date => pcache ? pcache['value']['effective_date'] : bundle.effective_date, :bundle_id => bundle._id })
+      records.each do |r|
+        mrns.push(r.medical_record_number)
+      end
+      PatientCache.not_in("value.medical_record_id" => mrns).destroy_all
       #results = qc.patient_results
       #qc.calculate({"oid_dictionary" => OidHelper.generate_oid_dictionary(qc.measure_id),
       #            'recalculate' => true}, true)
