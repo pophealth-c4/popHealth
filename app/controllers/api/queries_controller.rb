@@ -1,4 +1,5 @@
 require 'cypress/record_filter.rb'
+require 'cypress/cat_3_calculator.rb'
 
 module Api
   class QueriesController < ApplicationController
@@ -22,6 +23,12 @@ module Api
                 .find({"concepts._id": BSON::ObjectId("#{id}")}).projection({"concepts.$": 1}).first
       if !val.nil?
         val['concepts'][0]['code']
+      elsif !cval[:code].nil?
+        val = $mongo_client.database.collection('health_data_standards_svs_value_sets')
+                  .find({"concepts.code": cval[:code]}).projection({"concepts.$": 1}).first
+        val['concepts'][0]['code'] unless val.nil?
+      else
+        puts "id or code not found"
       end
     end
 
@@ -30,7 +37,7 @@ module Api
         'races' => method(:get_svs_value),
         'payers' => method(:get_svs_value),
         'problems' => method(:get_svs_value),
-        #,
+        'providerTypes' => method(:get_svs_value),
         'age' => Proc.new { |key, txt|
           res={}
           m = /(>=?)\s*(\d+)/.match(txt) or /(<=?)\s*(\d+)/.match(txt)
@@ -206,13 +213,13 @@ module Api
       filters={}
       #QME::QualityReport.where(measure_id: params[:id]).each do |qc|
       #authorize! :recalculate, qc
-        # add filters here
+      # add filters here
       params.each_pair do |key, value|
-        if not /controller|action|id/.match(key)
+        if not /^(controller|action|id)/i === key
           res=[]
           if @@filter_mapping[key]
             (0...value.length).each do |i|
-              res.push(@@filter_mapping[key].call(key, value[i]))
+              res.push(@@filter_mapping[key].call(key, value[i] || value[i.to_s]))
             end
             filters[key]=res
           else
@@ -229,22 +236,45 @@ module Api
       pcache = PatientCache.first
       mrns = []
       records = Cypress::RecordFilter.filter(Record, filters, {
-          :effective_date => pcache ? pcache['value']['effective_date'] : bundle.effective_date, :bundle_id => bundle._id })
-      records.each do |r|
-        mrns.push(r.medical_record_number)
+          :effective_date => pcache ? pcache['value']['effective_date'] : bundle.effective_date, :bundle_id => bundle._id})
+      norecs = records.count rescue nil
+      unless norecs.nil?
+        records.each do |r|
+          if PatientCache.where("value.medical_record_id": r['medical_record_number']).exists?
+            mrns.push(r.medical_record_number)
+          end
+        end
+        # At this point the mrns tell us what cat1's to keep and what cat3's to generate
+        pcache =$mongo_client.database.collection('patient_cache')
+        backup= $mongo_client.database.collection(:patient_cache_bak);
+        if backup.count > pcache.count
+          # restore to patient_cache
+          $mongo_client.database.collection(:patient_cache).insert_many(backup.find({}).to_a)
+        end
+        backup.drop() #backup.find({}).delete_many
+        backup.insert_many($mongo_client.database.collection('patient_cache').find({}).to_a)
+
+        PatientCache.not_in("value.medical_record_id" => mrns).destroy_all
+        # do everything
+
+      else
+        # what to do if there are no candidates after a filter? make empty zips?
       end
-      PatientCache.not_in("value.medical_record_id" => mrns).destroy_all
-      #results = qc.patient_results
+
+      render json: paginate(patient_results_api_query_url(),
+                            PatientCache.where(build_patient_filter).only(
+                                '_id', 'value.medical_record_id', 'value.first', 'value.last', 'value.birthdate',
+                                'value.gender', 'value.patient_id'))
       #qc.calculate({"oid_dictionary" => OidHelper.generate_oid_dictionary(qc.measure_id),
       #            'recalculate' => true}, true)
-      #lastqc=qc
     end
+
     #if lastqc
-#      render json: paginate(patient_results_api_query_url(lastqc),
-#                             lastqc.patient_results.where(build_patient_filter).only('_id', 'value.medical_record_id',
-#                                                                                     'value.first', 'value.last', 'value.birthdate',
-#                                                                                     'value.gender', 'value.patient_id'))
-#     end
+    #      render json: paginate(patient_results_api_query_url(lastqc),
+    #                             lastqc.patient_results.where(build_patient_filter).only('_id', 'value.medical_record_id',
+    #                                                                                     'value.first', 'value.last', 'value.birthdate',
+    #                                                                                     'value.gender', 'value.patient_id'))
+    #     end
 
 
     api :GET, '/queries/:id/patient_results[?population=true|false]',

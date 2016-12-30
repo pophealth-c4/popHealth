@@ -10,7 +10,10 @@ class Thorax.Views.BaseFilterView extends Thorax.View
           return {}
         processResults: (data, params) ->
           autoData = $.map data, ( item ) ->
-            return { text: (if item.name then item.name else item.display_name), id: (if item.id then item.id else item._id) }
+            return { text: (if item.name then item.name else item.display_name),
+              id: (if item.id then item.id else item._id),
+              code: (if item.code then item.code else "")
+            }
           return { results: autoData, pagination: { more: false } }
         cache: true
       createTag: (params) ->
