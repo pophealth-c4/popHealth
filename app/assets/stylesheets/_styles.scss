@@ -428,6 +428,11 @@ $table-border-color: white;
   }
 }
 
+#logsContainer {
+  margin-left: 20px;
+  margin-right: 20px;
+}
+
 #provider-filter, #patient-filter {
   .define-filter {
     font-style: italic;
