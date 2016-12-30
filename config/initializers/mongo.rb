@@ -1,5 +1,11 @@
 MONGO_DB = Mongoid.default_client
 
+if $mongo_client.nil?
+  host = Mongoid::Clients.default.cluster.addresses[0].host
+  port = Mongoid::Clients.default.cluster.addresses[0].port
+  database=Mongoid::Clients.default.options[:database]
+  $mongo_client = Mongo::Client.new("mongodb://#{host}:#{port}/#{database}?reconnect=true")
+end
 # js_collection = MONGO_DB['system.js']
 
 # unless js_collection.find_one('_id' => 'contains')

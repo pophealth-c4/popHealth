@@ -34,9 +34,9 @@ class Thorax.Views.FilterProviders extends Thorax.Views.BaseFilterView
 
   submit: ->
     filter = []
-    filter.push @getSelect2Values "#npiTags", "npi"
-    filter.push @getSelect2Values "#tinTags", "tin"
-    filter.push @getSelect2Values "#providerTypeTags", "providerType"
-    filter.push @getSelect2Values "#addressTags", "address"
+    filter.push @getSelect2Values "#npiTags", "npis"
+    filter.push @getSelect2Values "#tinTags", "tins"
+    filter.push @getSelect2Values "#providerTypeTags", "providerTypes"
+    filter.push @getSelect2Values "#addressTags", "addresses"
     @filterProvidersDialog.modal('hide')
     @trigger('filterSaved', filter)
