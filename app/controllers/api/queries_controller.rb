@@ -20,6 +20,8 @@ module Api
 
     def self.get_svs_value(key, cval)
       id = cval[:id]
+      code=cval[:code]
+      return code if ! code.nil?
       val = $mongo_client.database.collection('health_data_standards_svs_value_sets')
                 .find({"concepts._id": BSON::ObjectId("#{id}")}).projection({"concepts.$": 1}).first
       if !val.nil?
@@ -37,7 +39,11 @@ module Api
         'ethnicities' => method(:get_svs_value),
         'races' => method(:get_svs_value),
         'payers' => method(:get_svs_value),
-        'problems' => method(:get_svs_value),
+        'problems' => Proc.new{ |key, cval|
+          id=cval[:id]
+          val = $mongo_client.database.collection('health_data_standards_svs_value_sets').find("_id" => BSON::ObjectId("#{id}")).first
+          val['oid'] if not val.nil?
+        },
         'providerTypes' => method(:get_svs_value),
         'age' => Proc.new { |key, txt|
           res={}
@@ -225,9 +231,17 @@ module Api
           res=[]
           if @@filter_mapping[key]
             (0...value.length).each do |i|
+              # and why does the array come through sometimes with ['0'] instead of [0]
               res.push(@@filter_mapping[key].call(key, value[i] || value[i.to_s]))
             end
-            filters[key]=res
+            # hack alert #450.
+            # todo move all this to search and UI, so we just get useful stuff
+            # instead of spreading control coupling all over
+            if key == 'problems'
+              filters[key]= {:oid => res}
+            else
+              filters[key]=res
+            end
           else
             value = [value] unless value.is_a?(Array)
             filters[key] = value
