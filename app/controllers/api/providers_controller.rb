@@ -140,16 +140,30 @@ module Api
     end
 
     # ruby routing is bizarre
-    api :GET, "/providers/search?npi=:npi&tin=:tin", "Search for provider by a full or partial NPI"
+    api :GET, "/providers/search?npi=:npi&tin=:tin&address=:address", "Search for provider by partial NPI/TIN/Addresss"
     param :npi, String, :desc => "National Provider Identifier", :required => false
     param :tin, String, :desc => "Tax Information Number", :required => false
+    param :address, String, :desc => "Practice address piece", :required => false
     def search
       if ! params[:npi].nil?
         providers = Provider.all({"cda_identifiers" => {"$elemMatch" => {'root' =>"2.16.840.1.113883.4.6", "extension" => /#{params[:npi]}/i }}})
         render json: providers.map {|p| { id: p.id, name: "#{p.full_name} (#{p.npi})"} }
-        elsif ! params[:tin].nil?
-          providers = Provider.all({"cda_identifiers" => {"$elemMatch" => {'root' =>"2.16.840.1.113883.4.2", "extension" => /#{params[:tin]}/i }}})
-          render json: providers.map {|p| { id: p.id, name: "#{p.full_name} (#{p.tin})"} }
+      elsif ! params[:tin].nil?
+        providers = Provider.all({"cda_identifiers" => {"$elemMatch" => {'root' =>"2.16.840.1.113883.4.2", "extension" => /#{params[:tin]}/i }}})
+        render json: providers.map {|p| { id: p.id, name: "#{p.full_name} (#{p.tin})"} }
+      elsif !params[:address].nil?
+        # should be able to automate with something like Provider.fields.keys['<addresses_no>'].keys, but
+        # the Provider model in no way matches the current db collection, so spell it all out.
+        x=params[:address]
+        query={"addresses" => {"$elemMatch" => {"$or":[
+            {"city":/#{x}/i},
+            {"street":/#{x}/i},
+            {"state":/#{x}/i},
+            {"zip":/#{x}/i},
+            {"country":/#{x}/i}
+        ]}}}
+        providers = Provider.all(query)
+        render json: providers.map {|p| { id: p.id, name: "#{p.full_name} (#{p.addresses})"} }
       end
     end
 

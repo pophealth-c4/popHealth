@@ -19,12 +19,13 @@ class Thorax.Views.FilterProviders extends Thorax.Views.BaseFilterView
     'ready': 'setup'
     'click #save_and_run': 'submit'
 
+    # there does not seem to be a providers collection in the DB
   setup: ->
     @filterProvidersDialog = @$("#filterProvidersDialog")
     @setupSelect2 "#npiTags", "api/providers/search?npi="
     @setupSelect2 "#tinTags", "api/providers/search?tin="
     @setupSelect2 "#providerTypeTags", "api/value_sets/2.16.840.1.113762.1.4.1026.23.json?search="
-    @setupSelect2 "#addressTags", "api/practices/search?address="
+    @setupSelect2 "#addressTags", "api/providers/search?address="
 
   display: ->
     @filterProvidersDialog.modal(

@@ -230,7 +230,7 @@ module Api
         if not /^(controller|action|id)/i === key
           (0...val.length).each do |i|
             value =val[i] || val[i.to_s]
-            if /npis|tins/i === key
+            if /npis|tins|addresses/i === key
               key='provider_ids'
               value=value[:id]
             end
