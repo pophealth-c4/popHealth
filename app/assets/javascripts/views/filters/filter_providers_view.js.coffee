@@ -22,7 +22,7 @@ class Thorax.Views.FilterProviders extends Thorax.Views.BaseFilterView
   setup: ->
     @filterProvidersDialog = @$("#filterProvidersDialog")
     @setupSelect2 "#npiTags", "api/providers/search?npi="
-    @setupSelect2 "#tinTags", "api/practices/search?tin="
+    @setupSelect2 "#tinTags", "api/providers/search?tin="
     @setupSelect2 "#providerTypeTags", "api/value_sets/2.16.840.1.113762.1.4.1026.23.json?search="
     @setupSelect2 "#addressTags", "api/practices/search?address="
 

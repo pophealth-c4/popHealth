@@ -139,14 +139,21 @@ module Api
       render json: nil, status: 204
     end
 
-    api :GET, "/providers/search?npi=:npi&address=:address", "Search for provider by a full or partial NPI"
-    param :npi, String, :desc => "National Provider Identifier", :required => true
+    # ruby routing is bizarre
+    api :GET, "/providers/search?npi=:npi&tin=:tin", "Search for provider by a full or partial NPI"
+    param :npi, String, :desc => "National Provider Identifier", :required => false
+    param :tin, String, :desc => "Tax Information Number", :required => false
     def search
-      providers = Provider.all({"cda_identifiers.root" => "2.16.840.1.113883.4.6", "cda_identifiers.extension" => /.*#{params[:npi]}.*/i })
-      render json: providers.map {|p| { id: p.id, name: "#{p.full_name} (#{p.npi})"} }
+      if ! params[:npi].nil?
+        providers = Provider.all({"cda_identifiers" => {"$elemMatch" => {'root' =>"2.16.840.1.113883.4.6", "extension" => /#{params[:npi]}/i }}})
+        render json: providers.map {|p| { id: p.id, name: "#{p.full_name} (#{p.npi})"} }
+        elsif ! params[:tin].nil?
+          providers = Provider.all({"cda_identifiers" => {"$elemMatch" => {'root' =>"2.16.840.1.113883.4.2", "extension" => /#{params[:tin]}/i }}})
+          render json: providers.map {|p| { id: p.id, name: "#{p.full_name} (#{p.tin})"} }
+      end
     end
 
-  private
+    private
 
     def authorize_providers(providers)
       providers.each do |p|

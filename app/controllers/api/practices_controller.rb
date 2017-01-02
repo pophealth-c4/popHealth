@@ -61,7 +61,7 @@ module Api
     param :tin, String, :desc => "Tax Identification Number", :required => false
     param :address, String, :desc => "Provider/Practice Address", :required => false
     def search
-      if !params[:npi].blank?
+      if !params[:tin].blank?
         practices = Provider.all({"cda_identifiers.root" => "2.16.840.1.113883.4.2", "cda_identifiers.extension" => /.*#{params[:tin]}.*/i })
         render json: practices.map {|p| { id: p.practice.id, name: "#{p.full_name} (#{p.tin})"} }
       elsif !params[:address].blank?

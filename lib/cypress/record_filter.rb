@@ -25,6 +25,12 @@ module Cypress
         prov_query = build_provider_query(input_filters['providers'], options)
         query_pieces << prov_query unless prov_query == {}
       end
+      if input_filters['provider_ids']
+        query_pieces << { 'provider_performances' =>
+                              { '$elemMatch' =>
+                                    { 'provider_id' =>
+                                          { '$in' => input_filters['provider_ids'].map{ |id| BSON::ObjectId(id)}}}}}
+      end
 
       { '$and' => query_pieces }
     end
@@ -130,7 +136,7 @@ module Cypress
 
       provider_ids.collect! { |pid| BSON::ObjectId(pid) }
 
-      { 'provider_performances' => { '$elemMatch' => { 'provider_id' => { '$in' => provider_ids } } } }
+      { 'provider_performances' => { '$elemMatch' => { '_id' => { '$in' => provider_ids } } } }
     end
   end
 end

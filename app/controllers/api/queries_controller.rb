@@ -226,29 +226,34 @@ module Api
       #QME::QualityReport.where(measure_id: params[:id]).each do |qc|
       #authorize! :recalculate, qc
       # add filters here
-      params.each_pair do |key, value|
+      params.each_pair do |key, val|
         if not /^(controller|action|id)/i === key
-          res=[]
-          if @@filter_mapping[key]
-            (0...value.length).each do |i|
+          (0...val.length).each do |i|
+            value =val[i] || val[i.to_s]
+            if /npis|tins/i === key
+              key='provider_ids'
+              value=value[:id]
+            end
+            filters[key] = [] if filters[key].nil?
+            if @@filter_mapping[key]
               # and why does the array come through sometimes with ['0'] instead of [0]
-              res.push(@@filter_mapping[key].call(key, value[i] || value[i.to_s]))
+              filters[key].push(@@filter_mapping[key].call(key, value))
+              next # wish TF we had continue
             end
-            # hack alert #450.
-            # todo move all this to search and UI, so we just get useful stuff
-            # instead of spreading control coupling all over
+
             if key == 'problems'
-              filters[key]= {:oid => res}
-            else
-              filters[key]=res
+              filters[key].push(:oid => res)
+              next
             end
-          else
-            value = [value] unless value.is_a?(Array)
-            filters[key] = value
+
+            if value.is_a?(Array)
+              filters[key].concat(value)
+            else
+              filters[key].push(value)
+            end
           end
         end
       end
-
       #now do something with filters
       # todo: Date.new should be replaced by meaningful
       # todo: :bundle_id in options Is there only ever one bundle
@@ -257,36 +262,40 @@ module Api
       mrns = []
       records = Cypress::RecordFilter.filter(Record, filters, {
           :effective_date => pcache ? pcache['value']['effective_date'] : bundle.effective_date, :bundle_id => bundle._id})
-      norecs = records.count rescue nil
-      unless norecs.nil?
+      numrecs = records.count rescue nil
+      unless numrecs.nil?
+        reset_patient_cache
         records.each do |r|
           if PatientCache.where("value.medical_record_id": r['medical_record_number']).exists?
             mrns.push(r.medical_record_number)
           end
         end
         # At this point the mrns tell us what cat1's to keep and what cat3's to generate
-        pcache =$mongo_client.database.collection('patient_cache')
-        backup= $mongo_client.database.collection(:patient_cache_bak);
-        if backup.count > pcache.count
-          # restore to patient_cache
-          $mongo_client.database.collection(:patient_cache).insert_many(backup.find({}).to_a)
-        end
-        backup.drop() #backup.find({}).delete_many
-        backup.insert_many($mongo_client.database.collection('patient_cache').find({}).to_a)
 
         PatientCache.not_in("value.medical_record_id" => mrns).destroy_all
         # do everything
-
-      else
         # what to do if there are no candidates after a filter? make empty zips?
+        render json: paginate(patient_results_api_query_url(),
+                              PatientCache.where(build_patient_filter).only(
+                                  '_id', 'value.medical_record_id', 'value.first', 'value.last', 'value.birthdate',
+                                  'value.gender', 'value.patient_id'))
+      else
+        render json:{}
       end
-
-      render json: paginate(patient_results_api_query_url(),
-                            PatientCache.where(build_patient_filter).only(
-                                '_id', 'value.medical_record_id', 'value.first', 'value.last', 'value.birthdate',
-                                'value.gender', 'value.patient_id'))
       #qc.calculate({"oid_dictionary" => OidHelper.generate_oid_dictionary(qc.measure_id),
       #            'recalculate' => true}, true)
+    end
+
+    def reset_patient_cache
+      pcache =$mongo_client.database.collection('patient_cache')
+      backup= $mongo_client.database.collection(:patient_cache_bak);
+      if backup.count > pcache.count
+        # restore to patient_cache
+        pcache.drop()
+        $mongo_client.database.collection(:patient_cache).insert_many(backup.find({}).to_a)
+      end
+      backup.drop() #backup.find({}).delete_many
+      backup.insert_many($mongo_client.database.collection('patient_cache').find({}).to_a)
     end
 
     #if lastqc
