@@ -277,6 +277,8 @@ module Api
         end
         # do everything
         # what to do if there are no candidates after a filter? make empty zips?
+        # This next line is probably wrong. patient_results needs IPP params and a QR ID
+        # we don't have a qr id but we probably should
         render json: paginate(patient_results_api_query_url(),
                               PatientCache.where(build_patient_filter).only(
                                   '_id', 'value.medical_record_id', 'value.first', 'value.last', 'value.birthdate',
