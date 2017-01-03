@@ -223,7 +223,6 @@ module Api
     def filter
       lastqc=nil
       filters={}
-      #QME::QualityReport.where(measure_id: params[:id]).each do |qc|
       #authorize! :recalculate, qc
       # add filters here
       params.each_pair do |key, val|
@@ -271,8 +270,11 @@ module Api
           end
         end
         # At this point the mrns tell us what cat1's to keep and what cat3's to generate
-
-        PatientCache.not_in("value.medical_record_id" => mrns).destroy_all
+        # was: PatientCache.not_in("value.medical_record_id" => mrns).destroy_all
+        PatientCache.not_in("value.medical_record_id" => mrns).update_all("value.manual_exclusion" => true)
+        QME::QualityReport.where(measure_id: params[:id]).each do |qc|
+          qc.patient_results
+        end
         # do everything
         # what to do if there are no candidates after a filter? make empty zips?
         render json: paginate(patient_results_api_query_url(),
@@ -287,15 +289,19 @@ module Api
     end
 
     def reset_patient_cache
-      pcache =$mongo_client.database.collection('patient_cache')
-      backup= $mongo_client.database.collection(:patient_cache_bak);
-      if backup.count > pcache.count
-        # restore to patient_cache
-        pcache.drop()
-        $mongo_client.database.collection(:patient_cache).insert_many(backup.find({}).to_a)
-      end
-      backup.drop() #backup.find({}).delete_many
-      backup.insert_many($mongo_client.database.collection('patient_cache').find({}).to_a)
+      PatientCache.each { |pc|
+        pc.unset(:manual_exclusion)
+      }
+      return
+      # pcache =$mongo_client.database.collection('patient_cache')
+      # backup= $mongo_client.database.collection(:patient_cache_bak);
+      # if backup.count > pcache.count
+      #   # restore to patient_cache
+      #   pcache.drop()
+      #   $mongo_client.database.collection(:patient_cache).insert_many(backup.find({}).to_a)
+      # end
+      # backup.drop() #backup.find({}).delete_many
+      # backup.insert_many($mongo_client.database.collection('patient_cache').find({}).to_a)
     end
 
     #if lastqc
