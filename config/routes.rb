@@ -123,6 +123,7 @@ PopHealth::Application.routes.draw do
         get :patient_results
         put :recalculate
         post :filter
+        post :clearfilters
        end
     end
   end

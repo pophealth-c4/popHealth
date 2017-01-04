@@ -290,9 +290,22 @@ module Api
       #            'recalculate' => true}, true)
     end
 
+    api :POST, '/queries/:id/clearfilters', "Clear all filters and recalculate"
+    param :id, String, :desc => 'The id of the quality measure calculation', :required => true
+    def clearfilters
+       reset_patient_cache
+       QME::QualityReport.where(measure_id: params[:id]).each do |qc|
+         qc.patient_results
+       end
+       render json: paginate(patient_results_api_query_url(),
+                             PatientCache.where(build_patient_filter).only(
+                                 '_id', 'value.medical_record_id', 'value.first', 'value.last', 'value.birthdate',
+                                 'value.gender', 'value.patient_id'))
+    end
+
     def reset_patient_cache
       PatientCache.each { |pc|
-        pc.unset(:manual_exclusion)
+        pc.unset("value.manual_exclusion")
       }
       return
       # pcache =$mongo_client.database.collection('patient_cache')

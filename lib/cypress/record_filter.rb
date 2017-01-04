@@ -54,7 +54,7 @@ module Cypress
     end
 
     def self.build_payer_query(payer_list)
-      { 'insurance_providers' => { '$elemMatch' => { 'payer.name' => { '$in' => payer_list } } } }
+      { 'insurance_providers' => { '$elemMatch' => { 'codes.SOP' => { '$in' => payer_list } } } }
     end
 
     def self.build_age_query(age_filter, options)

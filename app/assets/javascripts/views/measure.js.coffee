@@ -26,9 +26,16 @@ class Thorax.Views.MeasureView extends Thorax.LayoutView
   events:
     'click #define-provider-filter': 'defineProviderFilterShow'
     'click #define-patient-filter': 'definePatientFilterShow'
+    'click #reset-all-filters': 'resetAllFiltersShow'
+    'click #reset-all-filters1': 'resetAllFiltersShow'
 
   context: ->
     _(super).extend @submeasure.toJSON(), measurementPeriod: moment(PopHealth.currentUser.get 'effective_date' * 1000).format('YYYY')
+
+  resetAllFiltersShow: (event) ->
+    $.post(
+      'api/queries/00/clearfilters'
+    )
 
   defineProviderFilterShow: (event) ->
     if (!@filterProvidersView)
