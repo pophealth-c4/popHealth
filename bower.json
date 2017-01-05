@@ -18,6 +18,6 @@
     "font-awesome": "^4.7.0",
     "jquery-placeholder": "~2.0.8",
     "datatables.net": "^1.10.13",
-    "jquery-tagit":"v2.0"
+    "jquery-tagit":"master"
   }
 }
