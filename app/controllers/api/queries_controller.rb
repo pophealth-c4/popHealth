@@ -17,11 +17,11 @@ module Api
     skip_authorization_check
     before_filter :authenticate_user!
     before_filter :set_pagination_params, :only => [:patient_results, :patients]
-
+    # HACK alert: should probably move these class methods to a helper.
     def self.get_svs_value(key, cval)
       id = cval[:id]
       code=cval[:code]
-      return code if ! code.nil?
+      return code if !code.nil?
       val = $mongo_client.database.collection('health_data_standards_svs_value_sets')
                 .find({"concepts._id": BSON::ObjectId("#{id}")}).projection({"concepts.$": 1}).first
       if !val.nil?
@@ -39,7 +39,7 @@ module Api
         'ethnicities' => method(:get_svs_value),
         'races' => method(:get_svs_value),
         'payers' => method(:get_svs_value),
-        'problems' => Proc.new{ |key, cval|
+        'problems' => Proc.new { |key, cval|
           id=cval[:id]
           val = $mongo_client.database.collection('health_data_standards_svs_value_sets').find("_id" => BSON::ObjectId("#{id}")).first
           val['oid'] if not val.nil?
@@ -72,22 +72,6 @@ module Api
           end
           puts "ERROR: Bad input to age:#{txt}"
         },
-        #     :gender => Patient,
-        # 'problems' => Proc.new { |key, id|
-        #   res=[]
-        #   val = $mongo_client.database.collection('health_data_standards_svs_value_sets')
-        #             .find({_id: BSON::ObjectId("#{id}")}).first
-        #   if not val.nil?
-        #     val['concepts'].each do |v|
-        #       res.push(v['code'])
-        #     end
-        #   end
-        #   res
-        # }
-        # npis =>
-        #     :tin => Provider,
-        #     :providerType => Provider,
-        #     :address => Provider
     }
 
 
@@ -205,16 +189,11 @@ module Api
       qr.calculate({"oid_dictionary" => OidHelper.generate_oid_dictionary(qr.measure_id),
                     'recalculate' => true}, true)
       log_api_call LogAction::UPDATE, "Force a clinical quality calculation"
-      render json: qr
+      render qr
     end
 
-
-    def resolveGender
-
-    end
-
-    def resolveAge
-
+    def self.generate_qrda1_zip mrns, current_user
+      fname = current_user[:current_file]
     end
 
     api :POST, '/queries/:id/filter', "Apply a filter to an existing measure calculation"
@@ -271,11 +250,20 @@ module Api
         end
         # At this point the mrns tell us what cat1's to keep and what cat3's to generate
         # was: PatientCache.not_in("value.medical_record_id" => mrns).destroy_all
-        PatientCache.not_in("value.medical_record_id" => mrns).update_all("value.manual_exclusion" => true)
-        QME::QualityReport.where(measure_id: params[:id]).each do |qc|
-          qc.patient_results
-        end
-        # do everything
+        QueriesController.generate_qrda1_zip mrns, current_user
+        PatientCache.not_in("value.medical_record_id" => mrns).each { |pc|
+          pc.update_attribute("value.manual_exclusion", true)
+          val = pc['value']
+          QME::ManualExclusion.create(:measure_id => val['measure_id'], :sub_id => val['sub_id'],
+                                      :medical_record_id => val['medical_record_id'])
+          PatientCache.delete_all
+          QME::QualityReport.where(measure_id: params[:id]).each do |qc|
+            authorize! :recalculate, qc
+            qc.calculate({"oid_dictionary" => OidHelper.generate_oid_dictionary(qc.measure_id),
+                          'recalculate' => true}, true)
+            log_api_call LogAction::UPDATE, "Force a clinical quality calculation"
+          end
+        }
         # what to do if there are no candidates after a filter? make empty zips?
         # This next line is probably wrong. patient_results needs IPP params and a QR ID
         # we don't have a qr id but we probably should
@@ -284,7 +272,7 @@ module Api
                                   '_id', 'value.medical_record_id', 'value.first', 'value.last', 'value.birthdate',
                                   'value.gender', 'value.patient_id'))
       else
-        render json:{}
+        render json: {}
       end
       #qc.calculate({"oid_dictionary" => OidHelper.generate_oid_dictionary(qc.measure_id),
       #            'recalculate' => true}, true)
@@ -292,22 +280,30 @@ module Api
 
     api :POST, '/queries/:id/clearfilters', "Clear all filters and recalculate"
     param :id, String, :desc => 'The id of the quality measure calculation', :required => true
+
     def clearfilters
-       reset_patient_cache
-       QME::QualityReport.where(measure_id: params[:id]).each do |qc|
-         qc.patient_results
-       end
-       render json: paginate(patient_results_api_query_url(),
-                             PatientCache.where(build_patient_filter).only(
-                                 '_id', 'value.medical_record_id', 'value.first', 'value.last', 'value.birthdate',
-                                 'value.gender', 'value.patient_id'))
+      reset_patient_cache
+      QME::QualityReport.where(measure_id: params[:id]).each do |qc|
+        qc.patient_results
+      end
+      render json: paginate(patient_results_api_query_url(),
+                            PatientCache.where(build_patient_filter).only(
+                                '_id', 'value.medical_record_id', 'value.first', 'value.last', 'value.birthdate',
+                                'value.gender', 'value.patient_id'))
     end
 
     def reset_patient_cache
       PatientCache.each { |pc|
-        pc.unset("value.manual_exclusion")
+        if (pc['value']['manual_exclusion']==true)
+          val=pc['value']
+          todel = QME::ManualExclusion.find({measure_id: val['measure_id'],
+                                             sub_id: val['sub_id'],
+                                             medical_record_id: val['medical_record_id']}).first rescue # stupid not found error
+              todel.delete if !todel.nil?
+          pc.unset("value.manual_exclusion")
+        end
       }
-      return
+
       # pcache =$mongo_client.database.collection('patient_cache')
       # backup= $mongo_client.database.collection(:patient_cache_bak);
       # if backup.count > pcache.count
