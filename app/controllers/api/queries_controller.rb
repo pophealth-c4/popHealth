@@ -1,5 +1,6 @@
 require 'cypress/record_filter.rb'
 require 'cypress/cat_3_calculator.rb'
+require 'c4_helper.rb'
 
 module Api
   class QueriesController < ApplicationController
@@ -192,8 +193,11 @@ module Api
       render qr
     end
 
-    def self.generate_qrda1_zip mrns, current_user
-      fname = current_user[:current_file]
+    def self.generate_qrda1_zip(filepath, mrns, current_user)
+      # fname = current_user[:current_file]
+      file = File.new(filepath,'w')
+      c4h = C4Helper.new
+      c4h.zip(file, Record.in(:medical_record_number => mrns).to_a)
     end
 
     api :POST, '/queries/:id/filter', "Apply a filter to an existing measure calculation"
@@ -250,7 +254,9 @@ module Api
         end
         # At this point the mrns tell us what cat1's to keep and what cat3's to generate
         # was: PatientCache.not_in("value.medical_record_id" => mrns).destroy_all
-        QueriesController.generate_qrda1_zip mrns, current_user
+        QueriesController.generate_qrda1_zip(
+            'tmp/'+QME::QualityMeasure.where(:id=>params[:id]).first['cms_id']+'-'+Time.new.iso8601.gsub(/:/,'-')+'.zip',
+            mrns, current_user)
         PatientCache.not_in("value.medical_record_id" => mrns).each { |pc|
           pc.update_attribute("value.manual_exclusion", true)
           val = pc['value']
