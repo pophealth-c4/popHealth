@@ -73,10 +73,12 @@ class AdminController < ApplicationController
     file_name = "patient_upload" + Time.now.to_i.to_s + rand(1000).to_s
 
     temp_file = File.new(file_location + "/" + file_name, "w")
-    # save for c4 filtering Cat I output
-    current_user.update_attribute(:current_file, temp_file.path)
+    # save for c4 filtering Cat I output; when to delete ()
+    savefile=temp_file.path+'.zip'
+    File.delete current_user['current_file'] if current_user['current_file'] and File.exist?(current_user['current_file'])
+    current_user.update_attribute(:current_file, savefile)
     File.open(temp_file.path, "wb") { |f| f.write(file.read) }
-
+    FileUtils.cp(temp_file.path,savefile)
     Delayed::Job.enqueue(ImportArchiveJob.new({'practice' => practice, 'file' => temp_file,'user' => current_user}),:queue=>:patient_import)
     redirect_to action: 'patients'
   end
