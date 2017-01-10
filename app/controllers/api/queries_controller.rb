@@ -253,8 +253,8 @@ module Api
       unless numrecs.nil?
         reset_patient_cache
         records.each do |r|
-          if PatientCache.where("value.medical_record_id": r['medical_record_number']).exists?
-            mrns.push(r.medical_record_number)
+          if PatientCache.where("value.medical_record_id" => r['medical_record_number']).exists?
+            mrns.push(r['medical_record_number'])
           end
         end
         # At this point the mrns tell us what cat1's to keep and what cat3's to generate
@@ -266,7 +266,7 @@ module Api
         PatientCache.not_in("value.medical_record_id" => mrns).each { |pc|
 
           val = pc['value']
-          QME::ManualExclusion.create(:measure_id => val['measure_id'], :sub_id => val['sub_id'],
+          QME::ManualExclusion.find_or_create_by(:measure_id => val['measure_id'], :sub_id => val['sub_id'],
                                       :medical_record_id => val['medical_record_id'])
         }
         PatientCache.delete_all
