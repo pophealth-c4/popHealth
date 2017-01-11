@@ -45,6 +45,7 @@ class User
   :effective_date
   :effective_start_date
 
+  field :current_file, type: String
   field :first_name, type: String
   field :last_name, type: String
   field :username, type: String
