@@ -259,7 +259,7 @@ module Api
         end
         # At this point the mrns tell us what cat1's to keep and what cat3's to generate
         # was: PatientCache.not_in("value.medical_record_id" => mrns).destroy_all
-        File.mkdir('results') if !File.exist?('results')
+        FileUtils.mkdir('results') if !File.exist?('results')
         QueriesController.generate_qrda1_zip(
             'results/'+QME::QualityMeasure.where(:id => params[:id]).first['cms_id']+'-'+namekey+'-'+Time.new.iso8601.gsub(/:/, '-')+'.zip',
             mrns, current_user)
