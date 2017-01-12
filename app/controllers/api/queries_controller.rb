@@ -264,12 +264,17 @@ module Api
             'results/'+QME::QualityMeasure.where(:id => params[:id]).first['cms_id']+'-'+namekey+'-'+Time.new.iso8601.gsub(/:/, '-')+'.zip',
             mrns, current_user)
         PatientCache.not_in("value.medical_record_id" => mrns).each { |pc|
-
           val = pc['value']
           QME::ManualExclusion.find_or_create_by(:measure_id => val['measure_id'], :sub_id => val['sub_id'],
                                       :medical_record_id => val['medical_record_id'])
         }
         PatientCache.delete_all
+        # force recalculate has no effect if the patients are cached !!!!!!!!!!!!!!
+        QME::QualityReport.where({measure_id: params[:id]}).each do |qc|
+          # updating nested attributes in Mongoid appears lame
+          qc.update_attribute(:status, {:state => nil, :log => qc['status']['log']})
+        end
+
         QME::QualityReport.where(measure_id: params[:id]).each do |qc|
           authorize! :recalculate, qc
           qc.calculate({"oid_dictionary" => OidHelper.generate_oid_dictionary(qc.measure_id),
@@ -278,19 +283,18 @@ module Api
         end
         QME::ManualExclusion.all.each do |me|
           PatientCache.where('value.medical_record_id' => me['medical_record_id']).each do |pc|
+            # don't know if this will work; mongoid seems a little lame about this
             pc.update_attribute("value.manual_exclusion", true)
           end
         end
         # what to do if there are no candidates after a filter? make empty zips?
         # This next line is probably wrong. patient_results needs IPP params and a QR ID
         # we don't have a qr id but we probably should
-        render json: paginate(patient_results_api_query_url(),
-                              PatientCache.where(build_patient_filter).only(
-                                  '_id', 'value.medical_record_id', 'value.first', 'value.last', 'value.birthdate',
-                                  'value.gender', 'value.patient_id'))
-      else
-        render json: {}
       end
+      render json: paginate(patient_results_api_query_url(),
+                            PatientCache.where(build_patient_filter).only(
+                                '_id', 'value.medical_record_id', 'value.first', 'value.last', 'value.birthdate',
+                                'value.manual_exclusion', 'value.gender', 'value.patient_id'))
       #qc.calculate({"oid_dictionary" => OidHelper.generate_oid_dictionary(qc.measure_id),
       #            'recalculate' => true}, true)
     end
@@ -300,13 +304,20 @@ module Api
 
     def clearfilters
       reset_patient_cache
-      QME::QualityReport.where(measure_id: params[:id]).each do |qc|
-        qc.patient_results
+      QME::QualityReport.where({measure_id: params[:id]}).each do |qc|
+        qc.update_attribute(:status, {:state => nil, :log => qc['status']['log']})
       end
+      QME::QualityReport.where(measure_id: params[:id]).each do |qc|
+        authorize! :recalculate, qc
+        qc.calculate({"oid_dictionary" => OidHelper.generate_oid_dictionary(qc.measure_id),
+                      'recalculate' => true}, true)
+        log_api_call LogAction::UPDATE, "Force a clinical quality calculation"
+      end
+
       render json: paginate(patient_results_api_query_url(),
                             PatientCache.where(build_patient_filter).only(
                                 '_id', 'value.medical_record_id', 'value.first', 'value.last', 'value.birthdate',
-                                'value.gender', 'value.patient_id'))
+                                'value.manual_exclusion', 'value.gender', 'value.patient_id'))
     end
 
     def reset_patient_cache
@@ -317,7 +328,7 @@ module Api
                                            sub_id: val['sub_id'],
                                            medical_record_id: val['medical_record_id']}).first rescue # stupid not found error
             todel.delete if !todel.nil?
-        pc.unset("value.manual_exclusion")
+        pc.unset("value.manual_exclusion") # no reason to believe this works
 
       }
 
@@ -412,6 +423,8 @@ module Api
       patient_filter["value.DENEX"]= {"$gt" => 0} if params[:denex] == "true"
       patient_filter["value.DENEXCEP"]= {"$gt" => 0} if params[:denexcep] == "true"
       patient_filter["value.MSRPOPL"]= {"$gt" => 0} if params[:msrpopl] == "true"
+      # jb addition
+      patient_filter["value.manual_exclusion"] = {"$exists" => 0}
       patient_filter["value.antinumerator"]= {"$gt" => 0} if params[:antinumerator] == "true"
       patient_filter["value.provider_performances.provider_id"]= BSON::ObjectId.from_string(params[:provider_id]) if params[:provider_id]
       patient_filter
