@@ -85,4 +85,58 @@ module C4Helper
       end
     end
   end
+
+  class Cat3Helper
+    attr_accessor :measids
+    attr_accessor :start_time
+    attr_accessor :end_time
+    def initialize
+      # define @measures, @start_time @end_time from query_cache  use pushnew? with measures
+      @measids=[]
+      QME::QualityReport.all.each { |qr|
+        @start_time=qr['start_time']
+        @end_time=qr['effective_time']
+        @measids.push(qr['measure_id']) if !measids.include?(qr['measure_id'])
+      }
+      #@measures = QME::QualityMeasure.in(:_id => measids).to_a
+    end
+
+    def cat3(provider_ids, providers, filepath)
+      #log_api_call LogAction::EXPORT, "QRDA Category 3 report"
+      # measure_ids = params[:measure_ids] ||current_user.preferences["selected_measure_ids"]
+      filter = @measids=="all" ? {}  : {:hqmf_id.in =>@measids}
+      exporter =  HealthDataStandards::Export::Cat3.new
+      effective_date = @end_time
+      effective_start_date = @start_time
+      end_date = Time.at(effective_date.to_i)
+      bndl = (b = HealthDataStandards::CQM::Bundle.all.sort(:version => :desc).first) ? b.version : 'n/a'
+      # todo: generalize to 2016 and beyond
+      use_r11 = /2016/ =~ bndl
+      provider_filter = nil
+      if ! provider_ids.nil?
+        provider_filter={'filters.providers' => provider_ids}
+      end
+      # workaround not being rails controller
+      cat3xml = exporter.export(HealthDataStandards::CQM::Measure.top_level.where(filter),
+                                  generate_header(providers),
+                                  effective_date.to_i,
+                                  Time.at(effective_start_date.to_i),
+                                  end_date,
+                                  use_r11.nil? ? nil : 'r1_1',
+                                  provider_filter)
+      File.open(filepath+'-qrda-cat3.xml', 'w'){ |f| f.write(cat3xml)}
+      cat3xml
+    end
+    def generate_header(provider)
+      header = Qrda::Header.new(APP_CONFIG["cda_header"])
+
+      header.identifier.root = UUID.generate
+      header.authors.each {|a| a.time = Time.now}
+      header.legal_authenticator.time = Time.now
+      header.performers << provider
+
+      header
+    end
+
+  end
 end

@@ -36,6 +36,16 @@ module Api
       end
     end
 
+    def self.generate_qrda1_zip(filepath, mrns, current_user)
+      # fname = current_user[:current_file]
+      file = File.new(filepath, 'w')
+      c4h = C4Helper::Cat1ZipFilter.new(current_user)
+      c4h.pluck(filepath, Record.in(:medical_record_number => mrns).to_a)
+      # old way makes empty zips
+      # c4h = C4Helper::Cat1Exporter.new
+      # c4h.zip(file, Record.in(:medical_record_number => mrns).to_a)
+    end
+
     @@filter_mapping = {
         'ethnicities' => method(:get_svs_value),
         'races' => method(:get_svs_value),
@@ -193,21 +203,10 @@ module Api
       render qr
     end
 
-    def self.generate_qrda1_zip(filepath, mrns, current_user)
-      # fname = current_user[:current_file]
-      file = File.new(filepath, 'w')
-      c4h = C4Helper::Cat1ZipFilter.new(current_user)
-      c4h.pluck(filepath, Record.in(:medical_record_number => mrns).to_a)
-      # old way makes empty zips
-      # c4h = C4Helper::Cat1Exporter.new
-      # c4h.zip(file, Record.in(:medical_record_number => mrns).to_a)
-    end
-
     api :POST, '/queries/:id/filter', "Apply a filter to an existing measure calculation"
     param :id, String, :desc => 'The id of the quality measure calculation', :required => true
 
     def filter
-      lastqc=nil
       namekey="unknown"
       filters={}
       #authorize! :recalculate, qc
@@ -244,11 +243,13 @@ module Api
       #now do something with filters
       # todo: Date.new should be replaced by meaningful
       # todo: :bundle_id in options Is there only ever one bundle
-      bundle=Bundle.first
+      bundle = HealthDataStandards::CQM::Bundle.all.sort(:version => :desc).first
       pcache = PatientCache.first
+      effective_date = pcache ? pcache['value']['effective_date'] : bundle.effective_date
+      pcache = nil
       mrns = []
       records = Cypress::RecordFilter.filter(Record, filters, {
-          :effective_date => pcache ? pcache['value']['effective_date'] : bundle.effective_date, :bundle_id => bundle._id})
+          :effective_date => effective_date, :bundle_id => bundle._id})
       numrecs = records.count rescue nil
       unless numrecs.nil?
         reset_patient_cache
@@ -260,41 +261,57 @@ module Api
         # At this point the mrns tell us what cat1's to keep and what cat3's to generate
         # was: PatientCache.not_in("value.medical_record_id" => mrns).destroy_all
         FileUtils.mkdir('results') if !File.exist?('results')
-        QueriesController.generate_qrda1_zip(
-            'results/'+QME::QualityMeasure.where(:id => params[:id]).first['cms_id']+'-'+namekey+'-'+Time.new.iso8601.gsub(/:/, '-')+'.zip',
-            mrns, current_user)
+        filepath='results/'+QME::QualityMeasure.where(:id => params[:id]).first['cms_id']+'-'+namekey+'-'+Time.new.iso8601.gsub(/:/, '-')
+        zipfilepath=filepath+'.zip'
+        QueriesController.generate_qrda1_zip(zipfilepath, mrns, current_user)
         PatientCache.not_in("value.medical_record_id" => mrns).each { |pc|
           val = pc['value']
           QME::ManualExclusion.find_or_create_by(:measure_id => val['measure_id'], :sub_id => val['sub_id'],
-                                      :medical_record_id => val['medical_record_id'])
+                                                 :medical_record_id => val['medical_record_id'])
         }
         PatientCache.delete_all
         # force recalculate has no effect if the patients are cached !!!!!!!!!!!!!!
         QME::QualityReport.where({measure_id: params[:id]}).each do |qc|
           # updating nested attributes in Mongoid appears lame
-          qc.update_attribute(:status, {:state => nil, :log => qc['status']['log']})
+          qc.update_attribute(:status, {:state => nil, :log => ''})
         end
 
         QME::QualityReport.where(measure_id: params[:id]).each do |qc|
           authorize! :recalculate, qc
           qc.calculate({"oid_dictionary" => OidHelper.generate_oid_dictionary(qc.measure_id),
-                        'recalculate' => true}, true)
+                        'recalculate' => true}, false)
           log_api_call LogAction::UPDATE, "Force a clinical quality calculation"
         end
+        pc_coll=$mongo_client.database.collection('patient_cache')
         QME::ManualExclusion.all.each do |me|
-          PatientCache.where('value.medical_record_id' => me['medical_record_id']).each do |pc|
-            # don't know if this will work; mongoid seems a little lame about this
-            pc.update_attribute("value.manual_exclusion", true)
+          # was doing this with mongoid -- took 4 lines and was not working
+          pc_coll.update_one({'value.medical_record_id': me['medical_record_id']}, {'$set': {'value.manual_exclusion': true}})
+        end
+        log_api_call LogAction::EXPORT, "QRDA Category 3 report"
+        providers=nil
+        # temp HACK
+        filters['provider_ids']=['587650be20d442626204f6d5']
+        if !filters['provider_ids'].nil?
+          filters['provider_ids'].each do |prid|
+            provider = Provider.find(prid)
+            authorize! :read, provider
+            providers = [] if providers.nil?
+            providers.push(provider)
           end
         end
+
+        cat3helper = C4Helper::Cat3Helper.new
+        cat3xml= cat3helper.cat3(filters['provider_ids'], providers, filepath)
         # what to do if there are no candidates after a filter? make empty zips?
         # This next line is probably wrong. patient_results needs IPP params and a QR ID
         # we don't have a qr id but we probably should
       end
-      render json: paginate(patient_results_api_query_url(),
-                            PatientCache.where(build_patient_filter).only(
-                                '_id', 'value.medical_record_id', 'value.first', 'value.last', 'value.birthdate',
-                                'value.manual_exclusion', 'value.gender', 'value.patient_id'))
+      send_file(zipfilepath, {:disposition => 'attachment'})
+      #render :file => zipfilepath, :content_disposition => 'attachment', :content_type => "application/zip"
+      # render json: paginate(patient_results_api_query_url(),
+      #                       PatientCache.where(build_patient_filter).only(
+      #                           '_id', 'value.medical_record_id', 'value.first', 'value.last', 'value.birthdate',
+      #                           'value.manual_exclusion', 'value.gender', 'value.patient_id'))
       #qc.calculate({"oid_dictionary" => OidHelper.generate_oid_dictionary(qc.measure_id),
       #            'recalculate' => true}, true)
     end
@@ -303,34 +320,48 @@ module Api
     param :id, String, :desc => 'The id of the quality measure calculation', :required => true
 
     def clearfilters
+      provs=$mongo_client.database.collection('query_cache').find({'measure_id' => {'$in':current_user.preferences['selected_measure_ids']}}).collect{|q| q['filters']['providers'][0]}.uniq
       reset_patient_cache
-      QME::QualityReport.where({measure_id: params[:id]}).each do |qc|
-        qc.update_attribute(:status, {:state => nil, :log => qc['status']['log']})
-      end
-      QME::QualityReport.where(measure_id: params[:id]).each do |qc|
-        authorize! :recalculate, qc
-        qc.calculate({"oid_dictionary" => OidHelper.generate_oid_dictionary(qc.measure_id),
-                      'recalculate' => true}, true)
-        log_api_call LogAction::UPDATE, "Force a clinical quality calculation"
-      end
-
-      render json: paginate(patient_results_api_query_url(),
-                            PatientCache.where(build_patient_filter).only(
-                                '_id', 'value.medical_record_id', 'value.first', 'value.last', 'value.birthdate',
-                                'value.manual_exclusion', 'value.gender', 'value.patient_id'))
+      meas_subs={params[:id] => []}
+      PatientCache.delete_all
+      QME::QualityReport.where({measure_id: params[:id]}).delete
+      # each do |qc|
+      #   authorize! :recalculate, qc
+      #   meas_subs[qc.measure_id].push(qc.sub_id) # multiple instances of sub id ok
+      #   qc.delete
+      # end
+      # temp hack
+      redirect_to('/#providers/'+provs[0])
+      # meas_subs.each do |measure, arr|
+      #   arr.each do |sub|
+      #     qc = QME::QualityReport.find_or_create(measure, sub, {})
+      #     authorize! :recalculate, qc
+      #     qc.calculate({"oid_dictionary" => OidHelper.generate_oid_dictionary(qc.measure_id),
+      #                   'recalculate' => true}, false)
+      #   end
+      # end
+      # log_api_call LogAction::UPDATE, "Force a clinical quality calculation"
+      #
+      # render json: paginate(patient_results_api_query_url(),
+      #                       PatientCache.where(build_patient_filter).only(
+      #                           '_id', 'value.medical_record_id', 'value.first', 'value.last', 'value.birthdate',
+      #                           'value.manual_exclusion', 'value.gender', 'value.patient_id'))
     end
 
     def reset_patient_cache
-      PatientCache.each { |pc|
-        # curveball here. Are we sure these were excluded by the filter?
+      mrns=[]
+      measures=[]
+      subs=[]
+      pcoll=$mongo_client.database.collection('patient_cache')
+      pcoll.update_many({}, {'$set': {'value.manual_exclusion': nil}})
+      pcoll.find().each do |pc|
         val=pc['value']
-        todel = QME::ManualExclusion.find({measure_id: val['measure_id'],
-                                           sub_id: val['sub_id'],
-                                           medical_record_id: val['medical_record_id']}).first rescue # stupid not found error
-            todel.delete if !todel.nil?
-        pc.unset("value.manual_exclusion") # no reason to believe this works
-
-      }
+        mrns.push(val['medical_record_id'])
+        measures.push(val['measure_id']) unless measures.include?(val['measure_id'])
+        subs.push(val['sub_id']) unless subs.include?(val['sub_id'])
+      end
+      $mongo_client.database.collection('manual_exclusions').delete_many(
+          {'measure_id': {'$in': measures}, 'sub_id': {'$in': subs}, 'medical_record_id': {'$in': mrns}})
 
       # pcache =$mongo_client.database.collection('patient_cache')
       # backup= $mongo_client.database.collection(:patient_cache_bak);
