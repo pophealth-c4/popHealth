@@ -61,7 +61,8 @@ module Api
                             end_date,
                             use_r11.nil? ? nil : 'r1_1',
                             provider_filter)
-      File.open('tmp/'+fname, 'w'){|f| f.write(xml)}
+      FileUtils.mkdir('results') if !File.exist?('results')
+      File.open('results/'+fname, 'w'){|f| f.write(xml)}
       render xml: xml, content_type: "attachment/xml"
     end
 
