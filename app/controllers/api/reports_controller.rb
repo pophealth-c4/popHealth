@@ -27,6 +27,19 @@ module Api
     def cat3
       log_api_call LogAction::EXPORT, "QRDA Category 3 report"
       measure_ids = params[:measure_ids] ||current_user.preferences["selected_measure_ids"]
+
+      # C4-mods : should we flag them so they can be conditional?
+      fname=''
+      cms_measures=nil
+      if !measure_ids.nil?
+        cms_measures=HealthDataStandards::CQM::Measure.in(:hqmf_id => measure_ids).collect{ |m| m.cms_id}.uniq
+        fname=cms_measures.join('_')+'_'
+      end
+      c4_filters=current_user.preferences['c4filters']
+      fname = fname+c4_filters.join('_')+'_' if ! c4_filters.nil?
+      # end C4-mods
+
+      fname=fname+'qrda_cat3.xml'
       filter = measure_ids=="all" ? {}  : {:hqmf_id.in =>measure_ids}
       exporter =  HealthDataStandards::Export::Cat3.new
       effective_date = params["effective_date"] || current_user.effective_date || Time.gm(2013, 12, 31)
@@ -41,13 +54,15 @@ module Api
         provider_filter = {}
         provider_filter['filters.providers'] = params[:provider_id] if params[:provider_id].present?
       end
-      render xml: exporter.export(HealthDataStandards::CQM::Measure.top_level.where(filter),
-                                   generate_header(provider),
-                                   effective_date.to_i,
-                                   Time.at(effective_start_date.to_i),
-                                  end_date,
-                                  use_r11.nil? ? nil : 'r1_1',
-                                   provider_filter), content_type: "attachment/xml"
+      xml = exporter.export(HealthDataStandards::CQM::Measure.top_level.where(filter),
+                            generate_header(provider),
+                            effective_date.to_i,
+                            Time.at(effective_start_date.to_i),
+                            end_date,
+                            use_r11.nil? ? nil : 'r1_1',
+                            provider_filter)
+      File.open('tmp/'+fname, 'w'){|f| f.write(xml)}
+      render xml: xml, content_type: "attachment/xml"
     end
 
     api :GET, "/reports/patients" #/:id/:sub_id/:effective_date/:provider_id/:patient_type"

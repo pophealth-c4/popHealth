@@ -207,12 +207,12 @@ module Api
     param :id, String, :desc => 'The id of the quality measure calculation', :required => true
 
     def filter
-      namekey="unknown"
+      namekey=[]
       filters={}
       #authorize! :recalculate, qc
       # add filters here
       params.each_pair do |key, val|
-        if not /^(controller|action|id)/i === key
+        if not /^(controller|action|id|default_provider_id)/i === key
           (0...val.length).each do |i|
             value =val[i] || val[i.to_s]
             if /npis|tins|addresses/i === key
@@ -237,7 +237,7 @@ module Api
               filters[key].push(value)
             end
           end
-          namekey=key # random choice
+          namekey.push(key) # random choice
         end
       end
       #now do something with filters
@@ -261,7 +261,9 @@ module Api
         # At this point the mrns tell us what cat1's to keep and what cat3's to generate
         # was: PatientCache.not_in("value.medical_record_id" => mrns).destroy_all
         FileUtils.mkdir('results') if !File.exist?('results')
-        filepath='results/'+QME::QualityMeasure.where(:id => params[:id]).first['cms_id']+'-'+namekey+'-'+Time.new.iso8601.gsub(/:/, '-')
+        filepath='results/'+QME::QualityMeasure.where(:id => params[:id]).first['cms_id']+'-'+namekey.join('-')+'-'+Time.new.iso8601.gsub(/:/, '-')
+        current_user.preferences['c4filters']=namekey
+        current_user.save
         zipfilepath=filepath+'.zip'
         QueriesController.generate_qrda1_zip(zipfilepath, mrns, current_user)
         PatientCache.not_in("value.medical_record_id" => mrns).each { |pc|
@@ -269,51 +271,47 @@ module Api
           QME::ManualExclusion.find_or_create_by(:measure_id => val['measure_id'], :sub_id => val['sub_id'],
                                                  :medical_record_id => val['medical_record_id'])
         }
+        # new let page recalc
         PatientCache.delete_all
         # force recalculate has no effect if the patients are cached !!!!!!!!!!!!!!
         QME::QualityReport.where({measure_id: params[:id]}).each do |qc|
           # updating nested attributes in Mongoid appears lame
-          qc.update_attribute(:status, {:state => nil, :log => ''})
+          qc.delete #update_attribute(:status, {:state => nil, :log => ''})
         end
 
-        QME::QualityReport.where(measure_id: params[:id]).each do |qc|
-          authorize! :recalculate, qc
-          qc.calculate({"oid_dictionary" => OidHelper.generate_oid_dictionary(qc.measure_id),
-                        'recalculate' => true}, false)
-          log_api_call LogAction::UPDATE, "Force a clinical quality calculation"
-        end
-        pc_coll=$mongo_client.database.collection('patient_cache')
-        QME::ManualExclusion.all.each do |me|
-          # was doing this with mongoid -- took 4 lines and was not working
-          pc_coll.update_one({'value.medical_record_id': me['medical_record_id']}, {'$set': {'value.manual_exclusion': true}})
-        end
-        log_api_call LogAction::EXPORT, "QRDA Category 3 report"
-        providers=nil
+        # QME::QualityReport.where(measure_id: params[:id]).each do |qc|
+        #   authorize! :recalculate, qc
+        #   qc.calculate({"oid_dictionary" => OidHelper.generate_oid_dictionary(qc.measure_id),
+        #                 'recalculate' => true}, false)
+        #   log_api_call LogAction::UPDATE, "Force a clinical quality calculation"
+        # end
+        # pc_coll=$mongo_client.database.collection('patient_cache')
+        # QME::ManualExclusion.all.each do |me|
+        #   # was doing this with mongoid -- took 4 lines and was not working
+        #   pc_coll.update_one({'value.medical_record_id': me['medical_record_id']}, {'$set': {'value.manual_exclusion': true}})
+        # end
+        # log_api_call LogAction::EXPORT, "QRDA Category 3 report"
+        # providers=nil
         # temp HACK
-        filters['provider_ids']=['587650be20d442626204f6d5']
-        if !filters['provider_ids'].nil?
-          filters['provider_ids'].each do |prid|
-            provider = Provider.find(prid)
-            authorize! :read, provider
-            providers = [] if providers.nil?
-            providers.push(provider)
-          end
-        end
+        # filters['provider_ids']=['587650be20d442626204f6d5']
+        # if !filters['provider_ids'].nil?
+        #   filters['provider_ids'].each do |prid|
+        #     provider = Provider.find(prid)
+        #     authorize! :read, provider
+        #     providers = [] if providers.nil?
+        #     providers.push(provider)
+        #   end
+        # end
 
-        cat3helper = C4Helper::Cat3Helper.new
-        cat3xml= cat3helper.cat3(filters['provider_ids'], providers, filepath)
+        # cat3helper = C4Helper::Cat3Helper.new
+        # cat3xml= cat3helper.cat3(filters['provider_ids'], providers, filepath)
         # what to do if there are no candidates after a filter? make empty zips?
         # This next line is probably wrong. patient_results needs IPP params and a QR ID
         # we don't have a qr id but we probably should
       end
-      send_file(zipfilepath, {:disposition => 'attachment'})
-      #render :file => zipfilepath, :content_disposition => 'attachment', :content_type => "application/zip"
-      # render json: paginate(patient_results_api_query_url(),
-      #                       PatientCache.where(build_patient_filter).only(
-      #                           '_id', 'value.medical_record_id', 'value.first', 'value.last', 'value.birthdate',
-      #                           'value.manual_exclusion', 'value.gender', 'value.patient_id'))
-      #qc.calculate({"oid_dictionary" => OidHelper.generate_oid_dictionary(qc.measure_id),
-      #            'recalculate' => true}, true)
+      #send_file(zipfilepath, {:disposition => 'attachment'})
+      #provs=$mongo_client.database.collection('query_cache').find({'measure_id' => {'$in':current_user.preferences['selected_measure_ids']}}).collect{|q| q['filters']['providers'][0]}.uniq
+      redirect_to '/#providers/'+params[:default_provider_id]
     end
 
     api :POST, '/queries/:id/clearfilters', "Clear all filters and recalculate"
@@ -324,14 +322,16 @@ module Api
       reset_patient_cache
       meas_subs={params[:id] => []}
       PatientCache.delete_all
-      QME::QualityReport.where({measure_id: params[:id]}).delete
+      current_user.preferences['c4filters']=nil
+      current_user.save
+      QME::QualityReport.where(:measure_id => params[:id]).delete
       # each do |qc|
       #   authorize! :recalculate, qc
       #   meas_subs[qc.measure_id].push(qc.sub_id) # multiple instances of sub id ok
       #   qc.delete
       # end
       # temp hack
-      redirect_to('/#providers/'+provs[0])
+      redirect_to '/#providers/'+params[:default_provider_id]
       # meas_subs.each do |measure, arr|
       #   arr.each do |sub|
       #     qc = QME::QualityReport.find_or_create(measure, sub, {})

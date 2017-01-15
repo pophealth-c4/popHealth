@@ -33,8 +33,11 @@ class Thorax.Views.MeasureView extends Thorax.LayoutView
     _(super).extend @submeasure.toJSON(), measurementPeriod: moment(PopHealth.currentUser.get 'effective_date' * 1000).format('YYYY')
 
   resetAllFiltersShow: (event) ->
+    # hack to prevent subsequent page from looking for dead query_cache
+    delete this.submeasure.queries[this.provider_id]
     $.post(
-      'api/queries/00/clearfilters'
+      'api/queries/'+this.submeasure.attributes.id+'/clearfilters'
+      $.param({default_provider_id : this.provider_id})
     )
 
   defineProviderFilterShow: (event) ->
@@ -60,8 +63,11 @@ class Thorax.Views.MeasureView extends Thorax.LayoutView
     event.preventDefault()
 
   saveFilter: (filter, url) ->
+    # hack to prevent subsequent page from looking for dead query_cache
+    delete this.submeasure.queries[this.provider_id]
     json={}
     (json[item.field] = item.items if item.items and item.items.length) for item in filter
+    json.default_provider_id=this.provider_id
     $.post(
       url
       $.param(json)
