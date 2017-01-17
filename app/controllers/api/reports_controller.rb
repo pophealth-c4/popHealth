@@ -13,7 +13,7 @@ module Api
     before_filter :authenticate_user!
     skip_authorization_check
 
-    api :GET, '/reports/qrda_cat3.xml', "Retrieve a QRDA Category III document"
+    api :GET, '/reports/*qrda_cat3.xml', "Retrieve a QRDA Category III document"
     param :measure_ids, Array, :desc => 'The HQMF ID of the measures to include in the document', :required => false
     param :effective_date, String, :desc => 'Time in seconds since the epoch for the end date of the reporting period',
                                    :required => false

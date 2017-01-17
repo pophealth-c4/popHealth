@@ -13,7 +13,7 @@ class Thorax.Views.FilterPatients extends Thorax.Views.BaseFilterView
       measureTypeLabel: null
       calculationTypeLabel: null
       hqmfSetId: null
-      redirectRoute: currentRoute
+      # redirectRoute: currentRoute
 
   events:
     'ready': 'setup'

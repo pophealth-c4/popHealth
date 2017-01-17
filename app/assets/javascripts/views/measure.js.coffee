@@ -71,6 +71,8 @@ class Thorax.Views.MeasureView extends Thorax.LayoutView
     $.post(
       url
       $.param(json)
+      (data, xhr)->
+        Backbone.history.navigate('/#providers/'+json.default_provider_id)
     )
 
   patientFilterSaved: (filter) ->

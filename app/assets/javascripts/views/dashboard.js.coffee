@@ -8,6 +8,7 @@ class Thorax.Views.ResultsView extends Thorax.View
     fetch: false
   initialize: ->
     @opml = Config.OPML
+
   events:
     model:
       change: ->
@@ -82,6 +83,7 @@ class Thorax.Views.DashboardSubmeasureView extends Thorax.View
             @$el.fadeTo 'fast', 1
             @stopListening query, 'change:status'
   context: ->
+    PopHealth.cmsid=@model.get('cms_id')
     matches = @model.get('cms_id').match(/CMS(\d+)v(\d+)/)
     _(super).extend
       cms_number: matches?[1]
@@ -130,6 +132,11 @@ class Thorax.Views.Dashboard extends Thorax.View
     PopHealth.currentUser.get 'effective_date'
   effective_start_date: ->
     PopHealth.currentUser.get 'effective_start_date'
+
+  dlFilePrefix: ->
+    prefs = PopHealth.currentUser.get 'preferences'
+    PopHealth.cmsid+'_'+prefs.c4filters.join('_') #+parent.model.get('cms_id') ## can't get there from here!!!!!
+
 
   categoryFilterContext: (category) ->
     selectedCategory = @selectedCategories.findWhere(category: category.get('category'))
