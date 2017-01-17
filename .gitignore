@@ -24,4 +24,4 @@ dump.rdb
 *.iml
 public/assets
 vendor/assets/components/*
-
+results/
