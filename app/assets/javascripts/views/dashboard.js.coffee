@@ -12,6 +12,7 @@ class Thorax.Views.ResultsView extends Thorax.View
   events:
     model:
       change: ->
+        PopHealth.cmsid += @model.get('cms_id')
         if @model.get('sub_id')
           measureid = String(@model.get('measure_id')) + String(@model.get('sub_id'))
         else
@@ -83,7 +84,6 @@ class Thorax.Views.DashboardSubmeasureView extends Thorax.View
             @$el.fadeTo 'fast', 1
             @stopListening query, 'change:status'
   context: ->
-    PopHealth.cmsid=@model.get('cms_id')
     matches = @model.get('cms_id').match(/CMS(\d+)v(\d+)/)
     _(super).extend
       cms_number: matches?[1]
@@ -110,6 +110,7 @@ class Thorax.Views.Dashboard extends Thorax.View
       @$('.collapse').on 'hidden.bs.collapse', toggleChevron
       @$('.collapse').on 'show.bs.collapse', toggleChevron
   initialize: ->
+    PopHealth.currentUser.cmsid=''
     @selectedCategories = PopHealth.currentUser.selectedCategories(@collection)
     @populationChartScaledToIPP = PopHealth.currentUser.populationChartScaledToIPP()
     @currentUser = PopHealth.currentUser.get 'username'
@@ -135,8 +136,9 @@ class Thorax.Views.Dashboard extends Thorax.View
 
   dlFilePrefix: ->
     prefs = PopHealth.currentUser.get 'preferences'
-    PopHealth.cmsid+'_'+prefs.c4filters.join('_') #+parent.model.get('cms_id') ## can't get there from here!!!!!
-
+    fname=PopHealth.cmsid
+    fname+=prefs.c4filters.join('_') if prefs.c4filters
+    fname
 
   categoryFilterContext: (category) ->
     selectedCategory = @selectedCategories.findWhere(category: category.get('category'))

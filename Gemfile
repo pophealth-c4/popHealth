@@ -3,12 +3,12 @@ source 'https://rubygems.org'
 gem 'rails', '~> 4.2.7'
 
 # Use MongoDB just like in Cypress v2!
-gem 'mongoid', '~> 5.0.0'
-gem 'mongo', '~>2.2'
+gem 'mongoid', '~> 5.0.2'
+gem 'mongo', '~>2.4.1'
 # gem 'mongoid', '~> 4.0.2'
 gem 'bson_ext', '~> 1.5.1'
 gem 'delayed_job_mongoid', github: 'collectiveidea/delayed_job_mongoid'
-gem 'health-data-standards', git: 'https://github.com/pophealth-c4/health-data-standards.git', branch: 'mongoid5'
+gem 'health-data-standards', git: 'https://github.com/pophealth-c4/health-data-standards.git', branch: 'mongoid5R2'
 
 gem 'quality-measure-engine',
     git: 'https://github.com/projectcypress/quality-measure-engine.git', branch: 'bump_mongoid'

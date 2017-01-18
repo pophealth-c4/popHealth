@@ -318,9 +318,7 @@ module Api
     param :id, String, :desc => 'The id of the quality measure calculation', :required => true
 
     def clearfilters
-      provs=$mongo_client.database.collection('query_cache').find({'measure_id' => {'$in':current_user.preferences['selected_measure_ids']}}).collect{|q| q['filters']['providers'][0]}.uniq
       reset_patient_cache
-      meas_subs={params[:id] => []}
       PatientCache.delete_all
       current_user.preferences['c4filters']=nil
       current_user.save
