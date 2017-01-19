@@ -32,13 +32,6 @@ class Thorax.Views.MeasureView extends Thorax.LayoutView
   context: ->
     _(super).extend @submeasure.toJSON(), measurementPeriod: moment(PopHealth.currentUser.get 'effective_date' * 1000).format('YYYY')
 
-  resetAllFiltersShow: (event) ->
-    # hack to prevent subsequent page from looking for dead query_cache
-    delete this.submeasure.queries[this.provider_id]
-    $.post(
-      'api/queries/'+this.submeasure.attributes.id+'/clearfilters'
-      $.param({default_provider_id : this.provider_id})
-    )
 
   defineProviderFilterShow: (event) ->
     if (!@filterProvidersView)
@@ -62,16 +55,32 @@ class Thorax.Views.MeasureView extends Thorax.LayoutView
     @filterPatientsView.display()
     event.preventDefault()
 
+  resetAllFiltersShow: (event) ->
+    # hack to prevent subsequent page from looking for dead query_cache
+    delete this.submeasure.queries[this.provider_id]
+    $.post(
+      'api/queries/'+this.submeasure.attributes.id+'/clearfilters'
+      $.param({default_provider_id : this.provider_id})
+      (data) ->
+        PopHealth.currentUser.get('preferences').c4filters = null
+        Backbone.history.navigate('/#providers/'+this.provider_id)
+    )
+
   saveFilter: (filter, url) ->
     # hack to prevent subsequent page from looking for dead query_cache
     delete this.submeasure.queries[this.provider_id]
     json={}
-    (json[item.field] = item.items if item.items and item.items.length) for item in filter
+    c4filters=[]
+    for item in filter
+      if item.items and item.items.length
+        json[item.field] = item.items
+        c4filters.push(item.field)
     json.default_provider_id=this.provider_id
     $.post(
       url
       $.param(json)
       (data, xhr)->
+        PopHealth.currentUser.get('preferences').c4filters = c4filters
         Backbone.history.navigate('/#providers/'+json.default_provider_id)
     )
 

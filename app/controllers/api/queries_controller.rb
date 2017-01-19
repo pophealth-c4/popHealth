@@ -268,8 +268,9 @@ module Api
         QueriesController.generate_qrda1_zip(zipfilepath, mrns, current_user)
         PatientCache.not_in("value.medical_record_id" => mrns).each { |pc|
           val = pc['value']
-          QME::ManualExclusion.find_or_create_by(:measure_id => val['measure_id'], :sub_id => val['sub_id'],
-                                                 :medical_record_id => val['medical_record_id'])
+          ManualExclusion.find_or_create_by(:measure_id => val['measure_id'], :sub_id => val['sub_id'],
+                                                 :medical_record_id => val['medical_record_id'],
+          :rationale => namekey, :user => current_user['_id'])
         }
         # new let page recalc
         PatientCache.delete_all
@@ -318,9 +319,7 @@ module Api
     param :id, String, :desc => 'The id of the quality measure calculation', :required => true
 
     def clearfilters
-      provs=$mongo_client.database.collection('query_cache').find({'measure_id' => {'$in':current_user.preferences['selected_measure_ids']}}).collect{|q| q['filters']['providers'][0]}.uniq
       reset_patient_cache
-      meas_subs={params[:id] => []}
       PatientCache.delete_all
       current_user.preferences['c4filters']=nil
       current_user.save

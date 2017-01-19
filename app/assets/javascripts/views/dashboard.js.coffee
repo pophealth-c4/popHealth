@@ -12,6 +12,8 @@ class Thorax.Views.ResultsView extends Thorax.View
   events:
     model:
       change: ->
+        # we only see one here when it is being added since these are local results
+        PopHealth.currentUser.cmsid = @model.parent.get('cms_id')
         if @model.get('sub_id')
           measureid = String(@model.get('measure_id')) + String(@model.get('sub_id'))
         else
@@ -36,6 +38,7 @@ class Thorax.Views.ResultsView extends Thorax.View
           if PopHealth.currentUser.populationChartScaledToIPP() then @popChart.maximumValue(@model.result().IPP) else @popChart.maximumValue(PopHealth.patientCount)
           @popChart.update(_(lower_is_better: @lower_is_better).extend @model.result())
     rendered: ->
+      PopHealth.currentUser.cmsid = @model.parent.get('cms_id')
       unless PopHealth.currentUser.showAggregateResult() then @$('.aggregate-result').hide()
       @$(".icon-popover").popover()
       @$('.dial').knob()
@@ -62,6 +65,7 @@ class Thorax.Views.ResultsView extends Thorax.View
       fractionBottom: if @model.isContinuous() then @model.ipp() else @model.performanceDenominator()
       aggregateResult: @model.aggregateResult()
   initialize: ->
+    PopHealth.currentUser.cmsid = @model.parent.get('cms_id')
     @popChart = PopHealth.viz.populationChart().width(125).height(25).maximumValue(PopHealth.patientCount)
     @model.set('providers', [@provider_id]) if @provider_id?
 
@@ -83,7 +87,6 @@ class Thorax.Views.DashboardSubmeasureView extends Thorax.View
             @$el.fadeTo 'fast', 1
             @stopListening query, 'change:status'
   context: ->
-    PopHealth.cmsid=@model.get('cms_id')
     matches = @model.get('cms_id').match(/CMS(\d+)v(\d+)/)
     _(super).extend
       cms_number: matches?[1]
@@ -110,6 +113,7 @@ class Thorax.Views.Dashboard extends Thorax.View
       @$('.collapse').on 'hidden.bs.collapse', toggleChevron
       @$('.collapse').on 'show.bs.collapse', toggleChevron
   initialize: ->
+    PopHealth.currentUser.cmsid=''
     @selectedCategories = PopHealth.currentUser.selectedCategories(@collection)
     @populationChartScaledToIPP = PopHealth.currentUser.populationChartScaledToIPP()
     @currentUser = PopHealth.currentUser.get 'username'
@@ -135,8 +139,12 @@ class Thorax.Views.Dashboard extends Thorax.View
 
   dlFilePrefix: ->
     prefs = PopHealth.currentUser.get 'preferences'
-    PopHealth.cmsid+'_'+prefs.c4filters.join('_') #+parent.model.get('cms_id') ## can't get there from here!!!!!
-
+    fname=PopHealth.currentUser.cmsid || ''
+    if prefs.c4filters
+      fname +='_' if fname.length > 0
+      fname+=prefs.c4filters.join('_')
+    fname +='_' if fname.length > 0
+    fname
 
   categoryFilterContext: (category) ->
     selectedCategory = @selectedCategories.findWhere(category: category.get('category'))

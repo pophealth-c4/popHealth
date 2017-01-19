@@ -41,12 +41,19 @@ module Api
 
       fname=fname+'qrda_cat3.xml'
       filter = measure_ids=="all" ? {}  : {:hqmf_id.in =>measure_ids}
+      bndl = (b = HealthDataStandards::CQM::Bundle.all.sort(:version => :desc).first) ? b.version : 'n/a'
+      cat3ver=nil
+      # TODO: this assumes that bundle 2016+ are tested under R2; to rollback, change 2016 -> r1.1
+      case bndl
+        when /201[56]/
+          cat3ver='r1_1'
+        when /2017/
+          cat3ver='r2'
+      end
       exporter =  HealthDataStandards::Export::Cat3.new
       effective_date = params["effective_date"] || current_user.effective_date || Time.gm(2013, 12, 31)
       effective_start_date = params["effective_start_date"] || current_user.effective_start_date || Time.gm(2012, 12, 31)
       end_date = Time.at(effective_date.to_i)
-      bndl = (b = HealthDataStandards::CQM::Bundle.all.sort(:version => :desc).first) ? b.version : 'n/a'
-      use_r11 = /2016/ =~ bndl
       provider = provider_filter = nil
       if params[:provider_id].present?
         provider = Provider.find(params[:provider_id])
@@ -59,7 +66,7 @@ module Api
                             effective_date.to_i,
                             Time.at(effective_start_date.to_i),
                             end_date,
-                            use_r11.nil? ? nil : 'r1_1',
+                            cat3ver,
                             provider_filter)
       FileUtils.mkdir('results') if !File.exist?('results')
       File.open('results/'+fname, 'w'){|f| f.write(xml)}
