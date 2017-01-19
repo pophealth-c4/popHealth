@@ -24,7 +24,7 @@ defaults: &defaults
   enable_map_reduce_rationale: false
   enable_map_reduce_logging: false
   #use provider opml heirarchy instead of practice based system
-  use_opml_structure: true
+  use_opml_structure: false #true
   
   # use workaround for new measure bundle 2.6.0 to get measure results
   ignore_provider_performance_dates: true
@@ -46,50 +46,50 @@ defaults: &defaults
     api_url: https://vsac.nlm.nih.gov/vsac/ws/RetrieveValueSet
   cda_header:
     :identifier:
-      :root:
-      :extension:
+      :root: '2.16.840.1.113883.19.5'
+      :extension: 'ZatoDoc'
     :authors:
     - :ids:
-      - :root: author_root
-        :extension: author_extension
+      - :root: '95944FB5-241B-11E5-1027-09173F13E4C5'
+        :extension: 'Zatohealth'
       :device:
-        :name: device_name
-        :model: device_model
+        :name: 'pophealth'
+        :model: '4.3'
       :addresses: []
       :telecoms: []
       :time:
       :organization:
         :ids:
-        - :root: authors_organization_root
-          :extension: authors_organization_ext
-        :name: ''
+        - :root: '2.16.840.1.113883.19.5'
+          :extension: 'Zato Health'
+        :name: 'Zato Health'
     :custodian:
       :ids:
-      - :root: custodian_root
-        :extension: custodian_ext
+      - :root: '2.16.840.1.113883.19.5'
+        :extension: 'Zato Health'
       :person:
-        :given: ''
-        :family: ''
+        :given: 'Lefty'
+        :family: 'Zato'
       :organization:
         :ids:
-        - :root: custodian_rganization_root
-          :extension: custodian_organization_ext
+        - :root: '2.16.840.1.113883.19.5'
+          :extension: 'Zato Health'
         :name: ''
     :legal_authenticator:
       :ids:
-      - :root: legal_authenticator_root
-        :extension: legal_authenticator_ext
+      - :root: '2.16.840.1.113883.19.5'
+        :extension: 'Zato Health'
       :addresses: []
       :telecoms: []
       :time:
       :person:
-        :given:
-        :family:
+        :given: 'Lefty'
+        :family: 'Zato'
       :organization:
         :ids:
-        - :root: legal_authenticator_org_root
-          :extension: legal_authenticator_org_ext
-        :name: ''
+        - :root: '2.16.840.1.113883.19.5'
+          :extension: 'Zato Health'
+        :name: 'Zato Health'
 
 development:
   <<: *defaults

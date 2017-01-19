@@ -268,8 +268,9 @@ module Api
         QueriesController.generate_qrda1_zip(zipfilepath, mrns, current_user)
         PatientCache.not_in("value.medical_record_id" => mrns).each { |pc|
           val = pc['value']
-          QME::ManualExclusion.find_or_create_by(:measure_id => val['measure_id'], :sub_id => val['sub_id'],
-                                                 :medical_record_id => val['medical_record_id'])
+          ManualExclusion.find_or_create_by(:measure_id => val['measure_id'], :sub_id => val['sub_id'],
+                                                 :medical_record_id => val['medical_record_id'],
+          :rationale => namekey, :user => current_user['_id'])
         }
         # new let page recalc
         PatientCache.delete_all

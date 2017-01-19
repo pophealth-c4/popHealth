@@ -12,7 +12,8 @@ class Thorax.Views.ResultsView extends Thorax.View
   events:
     model:
       change: ->
-        PopHealth.cmsid += @model.get('cms_id')
+        # we only see one here when it is being added since these are local results
+        PopHealth.cmsid = @model.parent.get('cms_id')
         if @model.get('sub_id')
           measureid = String(@model.get('measure_id')) + String(@model.get('sub_id'))
         else
@@ -37,6 +38,7 @@ class Thorax.Views.ResultsView extends Thorax.View
           if PopHealth.currentUser.populationChartScaledToIPP() then @popChart.maximumValue(@model.result().IPP) else @popChart.maximumValue(PopHealth.patientCount)
           @popChart.update(_(lower_is_better: @lower_is_better).extend @model.result())
     rendered: ->
+      PopHealth.cmsid = @model.parent.get('cms_id')
       unless PopHealth.currentUser.showAggregateResult() then @$('.aggregate-result').hide()
       @$(".icon-popover").popover()
       @$('.dial').knob()
@@ -63,6 +65,7 @@ class Thorax.Views.ResultsView extends Thorax.View
       fractionBottom: if @model.isContinuous() then @model.ipp() else @model.performanceDenominator()
       aggregateResult: @model.aggregateResult()
   initialize: ->
+    PopHealth.cmsid = @model.parent.get('cms_id')
     @popChart = PopHealth.viz.populationChart().width(125).height(25).maximumValue(PopHealth.patientCount)
     @model.set('providers', [@provider_id]) if @provider_id?
 
@@ -136,8 +139,11 @@ class Thorax.Views.Dashboard extends Thorax.View
 
   dlFilePrefix: ->
     prefs = PopHealth.currentUser.get 'preferences'
-    fname=PopHealth.cmsid
-    fname+=prefs.c4filters.join('_') if prefs.c4filters
+    fname=PopHealth.cmsid || ''
+    if prefs.c4filters
+      fname +='_' if fname.length > 0
+      fname+=prefs.c4filters.join('_')
+    fname +='_' if fname.length > 0
     fname
 
   categoryFilterContext: (category) ->
