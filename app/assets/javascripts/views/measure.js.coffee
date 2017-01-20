@@ -63,7 +63,7 @@ class Thorax.Views.MeasureView extends Thorax.LayoutView
       $.param({default_provider_id : this.provider_id})
       (data) ->
         PopHealth.currentUser.get('preferences').c4filters = null
-        Backbone.history.navigate('/#providers/'+this.provider_id)
+        # Backbone.history.navigate('/#providers/'+this.provider_id)
     )
 
   saveFilter: (filter, url) ->

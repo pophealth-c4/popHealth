@@ -1,5 +1,5 @@
+require 'c4_helper.rb'
 module Api
-
   class ReportsController < ApplicationController
     resource_description do
       short 'Reports'
@@ -70,6 +70,30 @@ module Api
       FileUtils.mkdir('results') if !File.exist?('results')
       File.open('results/'+fname, 'w'){|f| f.write(xml)}
       render xml: xml, content_type: "attachment/xml"
+    end
+
+    api :GET, '/reports/*cat1.zip', "Retrieve a QRDA Category I document"
+    param :provider_id, String, :desc => 'The Provider ID for CATIII generation', :required => false
+
+    description <<-CDESC
+      This action will generate a QRDA Category I Zip file with dupes removed and honoring any filters.
+    CDESC
+    def cat1_zip
+      #(filepath, mrns, current_user)
+      FileUtils.mkdir('results') if !File.exist?('results')
+      filepath='results/' + params[:cmsid] +'_'
+      filepath += (current_user.preferences['c4filters'] or []).join('_')
+      filepath += (filepath.end_with?('_') ? '' : '_') + 'cat1.zip'
+      file = File.new(filepath, 'w')
+      measure_id=HealthDataStandards::CQM::Measure.where(:cms_id=>params[:cmsid]).first['hqmf_id']
+      c4h = C4Helper::Cat1ZipFilter.new(current_user)
+      mrns = []
+      PatientCache.where('value.measure_id'=>measure_id).each do |pc|
+        mrns.push(pc['value.medical_record_id']) if ! pc['value.manual_exclusion']
+      end
+      c4h.pluck(filepath, Record.in(:medical_record_number => mrns).to_a) if mrns.length > 0
+      send_file(filepath, type: "application/zip", disposition: 'attachment')
+      nil
     end
 
     api :GET, "/reports/patients" #/:id/:sub_id/:effective_date/:provider_id/:patient_type"

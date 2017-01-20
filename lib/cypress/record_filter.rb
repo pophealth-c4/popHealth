@@ -118,7 +118,8 @@ module Cypress
       end
 
       relevant_codes.uniq!
-      problem_subquery = { '$elemMatch' => { 'oid' => { '$in' => problem_filters[:hqmf_ids] }, 'codes.SNOMED-CT' => { '$in' => relevant_codes } } }
+      #problem_subquery = { '$elemMatch' => { 'oid' => { '$in' => problem_filters[:hqmf_ids] }, 'codes.SNOMED-CT' => { '$in' => relevant_codes } } }
+      problem_subquery = { '$elemMatch' => { 'oid' => { '$in' => problem_filters[:oid] }, 'codes.SNOMED-CT' => { '$in' => relevant_codes } } }
 
       conditions = { 'conditions' => problem_subquery }
       procedures = { 'procedures' => problem_subquery }

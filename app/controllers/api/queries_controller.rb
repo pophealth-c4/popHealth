@@ -36,15 +36,6 @@ module Api
       end
     end
 
-    def self.generate_qrda1_zip(filepath, mrns, current_user)
-      # fname = current_user[:current_file]
-      file = File.new(filepath, 'w')
-      c4h = C4Helper::Cat1ZipFilter.new(current_user)
-      c4h.pluck(filepath, Record.in(:medical_record_number => mrns).to_a)
-      # old way makes empty zips
-      # c4h = C4Helper::Cat1Exporter.new
-      # c4h.zip(file, Record.in(:medical_record_number => mrns).to_a)
-    end
 
     @@filter_mapping = {
         'ethnicities' => method(:get_svs_value),
@@ -220,17 +211,21 @@ module Api
               key='provider_ids'
               value=value[:id]
             end
-            filters[key] = [] if filters[key].nil?
+            filters[key] = [] if filters[key].nil? unless key == 'problems'
             if @@filter_mapping[key]
+              res=@@filter_mapping[key].call(key, value)
               # and why does the array come through sometimes with ['0'] instead of [0]
-              filters[key].push(@@filter_mapping[key].call(key, value))
+              if key == 'problems'
+                if filters[key].nil?
+                  filters[key]={:oid => []}
+                end
+                filters[key][:oid].push(res)
+              else
+                filters[key].push(res)
+              end
               next # wish TF we had continue
             end
 
-            if key == 'problems'
-              filters[key].push(:oid => res)
-              next
-            end
 
             if value.is_a?(Array)
               filters[key].concat(value)
@@ -261,12 +256,12 @@ module Api
         end
         # At this point the mrns tell us what cat1's to keep and what cat3's to generate
         # was: PatientCache.not_in("value.medical_record_id" => mrns).destroy_all
-        FileUtils.mkdir('results') if !File.exist?('results')
-        filepath='results/'+QME::QualityMeasure.where(:id => params[:id]).first['cms_id']+'-'+namekey.join('-')+'-'+Time.new.iso8601.gsub(/:/, '-')
+        # FileUtils.mkdir('results') if !File.exist?('results')
+        # filepath='results/'+QME::QualityMeasure.where(:id => params[:id]).first['cms_id']+'_'+namekey.join('_')
         current_user.preferences['c4filters']=namekey
         current_user.save
-        zipfilepath=filepath+'.zip'
-        QueriesController.generate_qrda1_zip(zipfilepath, mrns, current_user)
+        #zipfilepath=filepath+'.zip'
+        #QueriesController.generate_qrda1_zip(zipfilepath, mrns, current_user)
         PatientCache.not_in("value.medical_record_id" => mrns).each { |pc|
           val = pc['value']
           ManualExclusion.find_or_create_by(:measure_id => val['measure_id'], :sub_id => val['sub_id'],

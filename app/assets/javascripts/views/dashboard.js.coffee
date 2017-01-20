@@ -12,12 +12,14 @@ class Thorax.Views.ResultsView extends Thorax.View
   events:
     model:
       change: ->
-        # we only see one here when it is being added since these are local results
-        PopHealth.currentUser.cmsid = @model.parent.get('cms_id')
+        # HACK alert: This was currently breaking in an unforgiveably stupid way
+        parr = @model.get['providers']
+        if parr && parr.length && typeof(parr[0]) == 'undefined'
+          parr[0]= PopHealth.currentUser.provider_id
         if @model.get('sub_id')
           measureid = String(@model.get('measure_id')) + String(@model.get('sub_id'))
         else
-          measureid = String(@model.get('measure_id')) 
+          measureid = String(@model.get('measure_id'))
         loadingDiv = "." + measureid + "-loading-measure"
         if (PopHealth.currentUser.showAggregateResult() and @model.aggregateResult()) or (!PopHealth.currentUser.showAggregateResult() and @model.isPopulated())
           $(loadingDiv).hide()
@@ -38,7 +40,7 @@ class Thorax.Views.ResultsView extends Thorax.View
           if PopHealth.currentUser.populationChartScaledToIPP() then @popChart.maximumValue(@model.result().IPP) else @popChart.maximumValue(PopHealth.patientCount)
           @popChart.update(_(lower_is_better: @lower_is_better).extend @model.result())
     rendered: ->
-      PopHealth.currentUser.cmsid = @model.parent.get('cms_id')
+      #PopHealth.currentUser.cmsid = @model.parent.get('cms_id')
       unless PopHealth.currentUser.showAggregateResult() then @$('.aggregate-result').hide()
       @$(".icon-popover").popover()
       @$('.dial').knob()
@@ -50,12 +52,12 @@ class Thorax.Views.ResultsView extends Thorax.View
       clearInterval(@timeout) if @timeout?
 
   authorize: ->
-    @response = $.ajax({ 
+    @response = $.ajax({
       async: false,
-      url: "home/check_authorization/", 
+      url: "home/check_authorization/",
       data: {"id": @provider_id}
-    }).responseText    
-    
+    }).responseText
+
   shouldDisplayPercentageVisual: -> !@model.isContinuous() and PopHealth.currentUser.shouldDisplayPercentageVisual()
   context: (attrs) ->
     _(super).extend
@@ -112,24 +114,25 @@ class Thorax.Views.Dashboard extends Thorax.View
       toggleChevron = (e) -> $(e.target).parent('.panel').find('.panel-chevron').toggleClass 'glyphicon-chevron-right glyphicon-chevron-down'
       @$('.collapse').on 'hidden.bs.collapse', toggleChevron
       @$('.collapse').on 'show.bs.collapse', toggleChevron
+      this.insertFilenameLinks()
+
   initialize: ->
-    PopHealth.currentUser.cmsid=''
     @selectedCategories = PopHealth.currentUser.selectedCategories(@collection)
     @populationChartScaledToIPP = PopHealth.currentUser.populationChartScaledToIPP()
     @currentUser = PopHealth.currentUser.get 'username'
     @showAggregateResult = PopHealth.currentUser.showAggregateResult()
     @opml = Config.OPML
 
-  toggleAggregateShow: (e) ->    
+  toggleAggregateShow: (e) ->
     shown = PopHealth.currentUser.showAggregateResult()
     PopHealth.currentUser.setShowAggregateResult(!shown)
-    if !shown 
+    if !shown
       if confirm "Please wait for the aggregate measure to calculate. The result will appear when the calculation is completed."
         location.reload()
-        @$('.aggregate-result').toggle(400)   
+        @$('.aggregate-result').toggle(400)
         @$('.aggregate-btn').toggleClass('active')
     else
-      @$('.aggregate-result').toggle(400)   
+      @$('.aggregate-result').toggle(400)
       @$('.aggregate-btn').toggleClass('active')
 
   effective_date: ->
@@ -137,14 +140,41 @@ class Thorax.Views.Dashboard extends Thorax.View
   effective_start_date: ->
     PopHealth.currentUser.get 'effective_start_date'
 
-  dlFilePrefix: ->
+  dlFileName: (n)->
     prefs = PopHealth.currentUser.get 'preferences'
-    fname=PopHealth.currentUser.cmsid || ''
+    fname='/api/reports/'
+    fname += PopHealth.currentUser.cmsid || ''
     if prefs.c4filters
       fname +='_' if fname.length > 0
       fname+=prefs.c4filters.join('_')
-    fname +='_' if fname.length > 0
+    fname +='_' if ! fname.endsWith('/')
+    if n==3
+      fname+='qrda_cat3.xml'
+      qmark=false
+      ed=this.effective_date()
+      if ed
+        fname+='?'
+        qmark=true
+        fname += "effective_date=#{ed}"
+      if @provider_id
+        if qmark then fname+='&' else fname+='?'
+        fname+="provider_id=#{@provider_id}"
+    else  # n==1
+      fname += "cat1.zip?cmsid=#{PopHealth.currentUser.cmsid}"
     fname
+
+  insertFilenameLinks: ->
+    $('#cat3link').attr('href', this.dlFileName(3))
+    $('#cat1link').attr('href', this.dlFileName(1))
+
+  fnameRemoveMeasure: (cmsid) ->
+    PopHealth.currentUser.cmsid=PopHealth.currentUser.cmsid.replace(cmsid,'')
+    this.insertFilenameLinks()
+
+  fnameAddMeasure: (cmsid) ->
+    PopHealth.currentUser.cmsid = cmsid # not handling multiples yet
+    this.insertFilenameLinks()
+
 
   categoryFilterContext: (category) ->
     selectedCategory = @selectedCategories.findWhere(category: category.get('category'))
@@ -230,8 +260,10 @@ class Thorax.Views.Dashboard extends Thorax.View
     measure = $cb.model()
     if $cb.is('.active')
       @selectedCategories.selectMeasure measure
+      this.fnameAddMeasure(measure.get('cms_id'))
     else
       @selectedCategories.removeMeasure measure
+      this.fnameRemoveMeasure(measure.get('cms_id'))
     $cb.closest('.panel-collapse').prev('.panel-heading').find('.measure-count').text $cbs.filter('.active').length
 
   toggleCategory: (e) ->
