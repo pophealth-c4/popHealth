@@ -69,14 +69,17 @@ module C4Helper
     def pluck(outfilepath, patients)
       names=[]
       patients.each do |p|
-        names.push(Regexp.new(p['first']+'_'+p['last']))
+        names.push(Regexp.new("(?<nm>#{p['first']}_#{p['last']})"))
       end
       # Zip::OutputStream.open(outfilepath) do |zout|
       #   Zip::InputStream.open(@infile) do |zin|
+      seen=[] # filter dupes
       Zip::OutputStream.open(outfilepath, Zip::File::CREATE) do |zout|
         Zip::File.open(@infile) do |zin|
           zin.each do |entry|
-            if !names.find{|e| e=~entry.name}.nil?
+            m = names.map{|e| e.match(entry.name)}.compact
+            if m.length > 0 and ! seen.include? m[0]['nm']
+              seen.push(m[0]['nm'])
               entry.write_to_zip_output_stream(zout)
             end
           end

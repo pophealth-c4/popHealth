@@ -58,7 +58,8 @@ module Api
         'providerTypes' => method(:get_svs_value),
         'age' => Proc.new { |key, txt|
           res={}
-          m = /(>=?)\s*(\d+)/.match(txt) or /(<=?)\s*(\d+)/.match(txt)
+          m = /(>=?)\s*(\d+)/.match(txt)
+          m =  /(<=?)\s*(\d+)/.match(txt) if m.nil?
           unless m.nil?
             n=m[2].to_i # to_i?
             case m[1]
