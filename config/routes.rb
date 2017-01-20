@@ -55,6 +55,7 @@ PopHealth::Application.routes.draw do
 
   namespace :api do
     get 'reports/*qrda_cat3.xml', :to =>'reports#cat3', :format => :xml
+    get 'reports/*cat1.zip', :to =>'reports#cat1_zip', :format => :zip
     get 'reports/cat1/:id/:measure_ids', :to =>'reports#cat1', :format => :xml
     get 'teams/team_providers/:id', :to => 'teams#team_providers'
     get 'reports/patients', :to => 'reports#patients'
