@@ -211,17 +211,21 @@ module Api
               key='provider_ids'
               value=value[:id]
             end
-            filters[key] = [] if filters[key].nil?
+            filters[key] = [] if filters[key].nil? unless key == 'problems'
             if @@filter_mapping[key]
+              res=@@filter_mapping[key].call(key, value)
               # and why does the array come through sometimes with ['0'] instead of [0]
-              filters[key].push(@@filter_mapping[key].call(key, value))
+              if key == 'problems'
+                if filters[key].nil?
+                  filters[key]={:oid => []}
+                end
+                filters[key][:oid].push(res)
+              else
+                filters[key].push(res)
+              end
               next # wish TF we had continue
             end
 
-            if key == 'problems'
-              filters[key].push(:oid => res)
-              next
-            end
 
             if value.is_a?(Array)
               filters[key].concat(value)
@@ -256,7 +260,7 @@ module Api
         # filepath='results/'+QME::QualityMeasure.where(:id => params[:id]).first['cms_id']+'_'+namekey.join('_')
         current_user.preferences['c4filters']=namekey
         current_user.save
-        zipfilepath=filepath+'.zip'
+        #zipfilepath=filepath+'.zip'
         #QueriesController.generate_qrda1_zip(zipfilepath, mrns, current_user)
         PatientCache.not_in("value.medical_record_id" => mrns).each { |pc|
           val = pc['value']

@@ -81,9 +81,9 @@ module Api
     def cat1_zip
       #(filepath, mrns, current_user)
       FileUtils.mkdir('results') if !File.exist?('results')
-      filepath='results/' + params[:cmsid]
+      filepath='results/' + params[:cmsid] +'_'
       filepath += (current_user.preferences['c4filters'] or []).join('_')
-      filepath += '_cat1.zip'
+      filepath += (filepath.end_with?('_') ? '' : '_') + 'cat1.zip'
       file = File.new(filepath, 'w')
       measure_id=HealthDataStandards::CQM::Measure.where(:cms_id=>params[:cmsid]).first['hqmf_id']
       c4h = C4Helper::Cat1ZipFilter.new(current_user)
@@ -92,7 +92,8 @@ module Api
         mrns.push(pc['value.medical_record_id']) if ! pc['value.manual_exclusion']
       end
       c4h.pluck(filepath, Record.in(:medical_record_number => mrns).to_a) if mrns.length > 0
-      render file: filepath, content_type: "attachment/zip"
+      send_file(filepath, type: "application/zip", disposition: 'attachment')
+      nil
     end
 
     api :GET, "/reports/patients" #/:id/:sub_id/:effective_date/:provider_id/:patient_type"

@@ -12,8 +12,10 @@ class Thorax.Views.ResultsView extends Thorax.View
   events:
     model:
       change: ->
-        # we only see one here when it is being added since these are local results
-        # PopHealth.currentUser.cmsid = @model.parent.get('cms_id')
+        # HACK alert: This was currently breaking in an unforgiveably stupid way
+        parr = @model.get['providers']
+        if parr && parr.length && typeof(parr[0]) == 'undefined'
+          parr[0]= PopHealth.currentUser.provider_id
         if @model.get('sub_id')
           measureid = String(@model.get('measure_id')) + String(@model.get('sub_id'))
         else
