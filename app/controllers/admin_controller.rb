@@ -74,9 +74,19 @@ class AdminController < ApplicationController
 
     temp_file = File.new(file_location + "/" + file_name, "w")
     # save for c4 filtering Cat I output; when to delete ()
-    savefile=temp_file.path+'.zip'
-    File.delete current_user['current_file'] if current_user['current_file'] and File.exist?(current_user['current_file'])
-    current_user.update_attribute(:current_file, savefile)
+    savefile='tmp/import/'+file.original_filename
+    key=/^(CMS[^_]+)_/i.match(file.original_filename)
+    if key.nil?
+      key= file.original_filename
+    else
+      key=key[1]
+    end
+    current_user['files']={} if current_user['files'].nil?
+    current_user['files'][key] = savefile
+    current_user.save
+    # correction below Mongoid refused to save WITHOUT notification because current_file existed in user
+    # Mongoid was refusing to save this; does it need an ObjectId for every subdoc? ARRGH
+    # $mongo_client.database.collection('users').update_one({"_id":current_user._id},{"$set": {"files":current_user.files}})
     File.open(temp_file.path, "wb") { |f| f.write(file.read) }
     FileUtils.cp(temp_file.path,savefile)
     Delayed::Job.enqueue(ImportArchiveJob.new({'practice' => practice, 'file' => temp_file,'user' => current_user}),:queue=>:patient_import)
