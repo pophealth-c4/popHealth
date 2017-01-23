@@ -86,7 +86,7 @@ module Api
       filepath += (filepath.end_with?('_') ? '' : '_') + 'cat1.zip'
       file = File.new(filepath, 'w')
       measure_id=HealthDataStandards::CQM::Measure.where(:cms_id=>params[:cmsid]).first['hqmf_id']
-      c4h = C4Helper::Cat1ZipFilter.new(current_user)
+      c4h = C4Helper::Cat1ZipFilter.new(current_user, params[:cmsid])
       mrns = []
       PatientCache.where('value.measure_id'=>measure_id).each do |pc|
         mrns.push(pc['value.medical_record_id']) if ! pc['value.manual_exclusion']

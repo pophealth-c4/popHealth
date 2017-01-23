@@ -61,8 +61,8 @@ module C4Helper
     attr_accessor :infile
     attr_accessor :user
 
-    def initialize(user)
-      @infile = user['current_file']
+    def initialize(user, cmsid)
+      @infile = user['files'][cmsid]
       @user = user
     end
 
