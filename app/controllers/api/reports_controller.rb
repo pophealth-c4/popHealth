@@ -74,24 +74,50 @@ module Api
 
     api :GET, '/reports/*cat1.zip', "Retrieve a QRDA Category I document"
     param :provider_id, String, :desc => 'The Provider ID for CATIII generation', :required => false
-
+    #formats ['xml']
+    #param :measure_ids, String, :desc => "Measure IDs", :required => true
+    param :effective_date, String, :desc => 'Time in seconds since the epoch for the end date of the reporting period',
+          :required => false
+    param :effective_start_date, String, :desc => 'Time in seconds since the epoch for the start date of the reporting period',
+          :required => false
     description <<-CDESC
       This action will generate a QRDA Category I Zip file with dupes removed and honoring any filters.
     CDESC
     def cat1_zip
+      log_api_call LogAction::EXPORT, "QRDA Category 1 report", true
+        # exporter = HealthDataStandards::Export::Cat1.new
+        # patient = Record.find(params[:id])
+        # authorize! :read, patient
+        # measure_ids = params["measure_ids"].split(',')
+        # measures = HealthDataStandards::CQM::Measure.where(:hqmf_id.in => measure_ids)
+        # end_date = params["effective_date"] || current_user.effective_date || Time.gm(2012, 12, 31)
+        # start_date = params["effective_start_date"] || current_user.effective_start_date || end_date.years_ago(1)
+        # render xml: exporter.export(patient, measures, start_date, end_date)
+
       #(filepath, mrns, current_user)
       FileUtils.mkdir('results') if !File.exist?('results')
       filepath='results/' + params[:cmsid] +'_'
       filepath += (current_user.preferences['c4filters'] or []).join('_')
       filepath += (filepath.end_with?('_') ? '' : '_') + 'cat1.zip'
       file = File.new(filepath, 'w')
-      measure_id=HealthDataStandards::CQM::Measure.where(:cms_id=>params[:cmsid]).first['hqmf_id']
-      c4h = C4Helper::Cat1ZipFilter.new(current_user, params[:cmsid])
-      mrns = []
-      PatientCache.where('value.measure_id'=>measure_id).each do |pc|
-        mrns.push(pc['value.medical_record_id']) if ! pc['value.manual_exclusion']
+      measures=HealthDataStandards::CQM::Measure.where(:cms_id=>params[:cmsid]).to_a
+      patients=[]
+      PatientCache.where('value.measure_id'=> measures[0]['hqmf_id']).each do |pc|
+        if ! pc['value.manual_exclusion']
+          # stupid mongoid has find and find_by. Huge waste of neural space
+          p = Record.find(pc['value.patient_id'])
+          authorize! :read,p
+          patients.push(p)
       end
-      c4h.pluck(filepath, Record.in(:medical_record_number => mrns).to_a) if mrns.length > 0
+      end
+      # from cat1
+      exporter = HealthDataStandards::Export::Cat1.new 'r3_1'
+      measure_ids = measures.map {|m| m['hqmf_id']}
+      end_date = params["effective_date"] || current_user.effective_date || Time.gm(2015, 12, 31)
+      start_date = params["effective_start_date"] || current_user.effective_start_date || end_date.years_ago(1)
+      # end from cat1
+      c4h = C4Helper::Cat1ZipFilter.new(exporter, measures, start_date, end_date)
+      c4h.pluck(filepath, patients) if patients.length > 0
       send_file(filepath, type: "application/zip", disposition: 'attachment')
       nil
     end
@@ -315,7 +341,7 @@ module Api
     CDESC
     def cat1
       log_api_call LogAction::EXPORT, "QRDA Category 1 report", true
-      exporter = HealthDataStandards::Export::Cat1.new
+      exporter = HealthDataStandards::Export::Cat1.new 'r3_1'
       patient = Record.find(params[:id])
       authorize! :read, patient
       measure_ids = params["measure_ids"].split(',')
