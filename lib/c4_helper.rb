@@ -78,7 +78,7 @@ module C4Helper
       #, Zip::File::CREATE
       Zip::OutputStream.open(outfilepath) do |zout|
         patients.each do |patient|
-          zout.put_next_entry(make_name(patient))
+          zout.put_next_entry(make_name(patient)+'.xml')
           zout.puts(exporter.export(patient, measures,start_date, end_date, nil, 'r3_1'))
         end
         zout.close

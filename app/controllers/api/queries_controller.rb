@@ -1,5 +1,4 @@
 require 'cypress/record_filter.rb'
-require 'cypress/cat_3_calculator.rb'
 require 'c4_helper.rb'
 
 module Api
