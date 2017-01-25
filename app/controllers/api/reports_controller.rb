@@ -111,12 +111,11 @@ module Api
       end
       end
       # from cat1
-      exporter = HealthDataStandards::Export::Cat1.new 'r3_1'
       measure_ids = measures.map {|m| m['hqmf_id']}
       end_date = params["effective_date"] || current_user.effective_date || Time.gm(2015, 12, 31)
       start_date = params["effective_start_date"] || current_user.effective_start_date || end_date.years_ago(1)
       # end from cat1
-      c4h = C4Helper::Cat1ZipFilter.new(exporter, measures, start_date, end_date)
+      c4h = C4Helper::Cat1ZipFilter.new(measures, start_date, end_date)
       c4h.pluck(filepath, patients) if patients.length > 0
       send_file(filepath, type: "application/zip", disposition: 'attachment')
       nil
