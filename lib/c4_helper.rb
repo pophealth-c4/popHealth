@@ -63,8 +63,8 @@ module C4Helper
     attr_accessor :end_date
     attr_accessor :exporter
 
-    def initialize(exporter_in, measures_in, start_date_in, end_date_in)
-      @exporter = exporter_in
+    def initialize(measures_in, start_date_in, end_date_in)
+      @exporter = HealthDataStandards::Export::Cat1.new 'r3_1'
       @measures=measures_in
       @start_date=start_date_in
       @end_date=end_date_in
@@ -79,7 +79,7 @@ module C4Helper
       Zip::OutputStream.open(outfilepath) do |zout|
         patients.each do |patient|
           zout.put_next_entry(make_name(patient)+'.xml')
-          zout.puts(exporter.export(patient, measures,start_date, end_date, nil, 'r3_1'))
+          zout.puts(@exporter.export(patient, @measures,@start_date, @end_date, nil, 'r3_1'))
         end
         zout.close
       end
