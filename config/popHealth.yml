@@ -1,7 +1,7 @@
 defaults: &defaults
   # idle timeout settings
   idle_timeout_enabled: true
-  idle_timeout: 10000 #300000
+  idle_timeout: 300000
   # user should have the staff role by default when created (this allows users to see data accross all providers)
   default_user_staff_role: false
   # user should be approved by default when created
@@ -24,7 +24,7 @@ defaults: &defaults
   enable_map_reduce_rationale: false
   enable_map_reduce_logging: false
   #use provider opml heirarchy instead of practice based system
-  use_opml_structure: false #true
+  use_opml_structure: true
   
   # use workaround for new measure bundle 2.6.0 to get measure results
   ignore_provider_performance_dates: true
@@ -46,50 +46,50 @@ defaults: &defaults
     api_url: https://vsac.nlm.nih.gov/vsac/ws/RetrieveValueSet
   cda_header:
     :identifier:
-      :root: '2.16.840.1.113883.19.5'
-      :extension: 'ZatoDoc'
+      :root:
+      :extension:
     :authors:
     - :ids:
-      - :root: '95944FB5-241B-11E5-1027-09173F13E4C5'
-        :extension: 'Zatohealth'
+      - :root: author_root
+        :extension: author_extension
       :device:
-        :name: 'pophealth'
-        :model: '4.2'
+        :name: device_name
+        :model: device_model
       :addresses: []
       :telecoms: []
       :time:
       :organization:
         :ids:
-        - :root: '2.16.840.1.113883.19.5'
-          :extension: 'Zato Health'
-        :name: 'Zato Health'
+        - :root: authors_organization_root
+          :extension: authors_organization_ext
+        :name: ''
     :custodian:
       :ids:
-      - :root: '2.16.840.1.113883.19.5'
-        :extension: 'Zato Health'
+      - :root: custodian_root
+        :extension: custodian_ext
       :person:
-        :given: 'Lefty'
-        :family: 'Zato'
+        :given: ''
+        :family: ''
       :organization:
         :ids:
-        - :root: '2.16.840.1.113883.19.5'
-          :extension: 'Zato Health'
+        - :root: custodian_rganization_root
+          :extension: custodian_organization_ext
         :name: ''
     :legal_authenticator:
       :ids:
-      - :root: '2.16.840.1.113883.19.5'
-        :extension: 'Zato Health'
+      - :root: legal_authenticator_root
+        :extension: legal_authenticator_ext
       :addresses: []
       :telecoms: []
       :time:
       :person:
-        :given: 'Lefty'
-        :family: 'Zato'
+        :given:
+        :family:
       :organization:
         :ids:
-        - :root: '2.16.840.1.113883.19.5'
-          :extension: 'Zato Health'
-        :name: 'Zato Health'
+        - :root: legal_authenticator_org_root
+          :extension: legal_authenticator_org_ext
+        :name: ''
 
 development:
   <<: *defaults
