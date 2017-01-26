@@ -58,31 +58,28 @@ module C4Helper
 
   # Problem: you have to be running on the same machine you loaded the original file from
   class Cat1ZipFilter
-    attr_accessor :infile
-    attr_accessor :user
+    attr_accessor :measures
+    attr_accessor :start_date
+    attr_accessor :end_date
+    attr_accessor :exporter
 
-    def initialize(user, cmsid)
-      @infile = user['files'][cmsid]
-      @user = user
+    def initialize(measures_in, start_date_in, end_date_in)
+      @exporter = HealthDataStandards::Export::Cat1.new 'r3_1'
+      @measures=measures_in
+      @start_date=start_date_in
+      @end_date=end_date_in
+    end
+
+    def make_name(p)
+      "#{p['first']}_#{p['last']}"
     end
 
     def pluck(outfilepath, patients)
-      names=[]
-      patients.each do |p|
-        names.push(Regexp.new("(?<nm>#{p['first']}_#{p['last']})"))
-      end
-      # Zip::OutputStream.open(outfilepath) do |zout|
-      #   Zip::InputStream.open(@infile) do |zin|
-      seen=[] # filter dupes
-      Zip::OutputStream.open(outfilepath, Zip::File::CREATE) do |zout|
-        Zip::File.open(@infile) do |zin|
-          zin.each do |entry|
-            m = names.map{|e| e.match(entry.name)}.compact
-            if m.length > 0 and ! seen.include? m[0]['nm']
-              seen.push(m[0]['nm'])
-              entry.write_to_zip_output_stream(zout)
-            end
-          end
+      #, Zip::File::CREATE
+      Zip::OutputStream.open(outfilepath) do |zout|
+        patients.each do |patient|
+          zout.put_next_entry(make_name(patient)+'.xml')
+          zout.puts(@exporter.export(patient, @measures,@start_date, @end_date, nil, 'r3_1'))
         end
         zout.close
       end

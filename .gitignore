@@ -25,3 +25,4 @@ dump.rdb
 public/assets
 vendor/assets/components/*
 results/
+cypress-lib-dead
