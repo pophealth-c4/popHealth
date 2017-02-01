@@ -9,6 +9,7 @@ require "sprockets/railtie"
 require 'spreadsheet'
 require 'bson'
 require 'mongo'
+require 'date'
 
 if defined?(Bundler)
   # If you precompile assets before deploying to production, use this line
