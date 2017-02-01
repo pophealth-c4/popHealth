@@ -43,5 +43,29 @@ module QME
         qr.calculate({"recalculate"=>true, "oid_dictionary" =>oid_dc},true)
       end
     end
+
+    # find_or_create fails if you create _and_ there is a prefilter
+    def self.find_or_create(measure_id, sub_id, parameter_values)
+      @parameter_values = parameter_values
+      @parameter_values[:filters] = self.normalize_filters(@parameter_values[:filters])
+      query = {measure_id: measure_id, sub_id: sub_id}
+      query.merge! @parameter_values
+      m = QME::QualityMeasure.where(:hqmf_id => measure_id).first
+      if (! m[:prefilters])
+        qr = self.find_or_create_by(query)
+      else
+        begin
+          qr = self.find_by(query) # incredibly stupid mongoid error on not found
+        rescue => e
+          # should we make sure it is a not found error?
+          params= query.except!('prefilter')
+          # replicating measure prefilters here; alternative: stringify prefilter value
+          params[:prefilters] = m[:prefilters]
+          self.create(params)
+        end
+
+      end
+    end
+
   end
 end
