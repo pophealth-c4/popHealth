@@ -16,6 +16,7 @@ class Thorax.Views.ResultsView extends Thorax.View
         parr = @model.get['providers']
         if parr && parr.length && typeof(parr[0]) == 'undefined'
           parr[0]= PopHealth.currentUser.provider_id
+          # end HACK alert
         if @model.get('sub_id')
           measureid = String(@model.get('measure_id')) + String(@model.get('sub_id'))
         else
@@ -47,6 +48,12 @@ class Thorax.Views.ResultsView extends Thorax.View
       if @model.isPopulated()
         if PopHealth.currentUser.populationChartScaledToIPP() then @popChart.maximumValue(@model.result().IPP) else @popChart.maximumValue(PopHealth.patientCount)
         d3.select(@el).select('.pop-chart').datum(_(lower_is_better: @lower_is_better).extend @model.result()).call(@popChart)
+        try
+          $('#cat3link').attr('href', this.dlFileName(3))
+          $('#cat1link').attr('href', this.dlFileName(1))
+        catch
+          console.log(@model)
+          console.log(@model.attributes)
         @$('rect').popover()
     destroyed: ->
       clearInterval(@timeout) if @timeout?
@@ -57,6 +64,33 @@ class Thorax.Views.ResultsView extends Thorax.View
       url: "home/check_authorization/",
       data: {"id": @provider_id}
     }).responseText
+
+  dlFileName: (n)->
+    if ! PopHealth.currentUser.cmsid
+      c=this.selectedCategories._byId
+      m=c[Object.keys(c)[0]].attributes.measures._byId
+      PopHealth.currentUser.cmsid=m[(Object.keys(m)[0])].attributes.cms_id
+    prefs = PopHealth.currentUser.get 'preferences'
+    fname='/api/reports/'
+    fname += PopHealth.currentUser.cmsid || ''
+    if prefs.c4filters
+      fname +='_' if fname.length > 0
+      fname+=prefs.c4filters.join('_')
+    fname +='_' if ! fname.endsWith('/')
+    if n==3
+      fname+='qrda_cat3.xml'
+      qmark=false
+      ed=@model.get('effective_date')
+      if ed
+        fname+='?'
+        qmark=true
+        fname += "effective_date=#{ed}"
+      if @provider_id
+        if qmark then fname+='&' else fname+='?'
+        fname+="provider_id=#{@provider_id}"
+    else  # n==1
+      fname += "cat1.zip?cmsid=#{PopHealth.currentUser.cmsid}"
+    fname
 
   shouldDisplayPercentageVisual: -> !@model.isContinuous() and PopHealth.currentUser.shouldDisplayPercentageVisual()
   context: (attrs) ->
@@ -114,7 +148,7 @@ class Thorax.Views.Dashboard extends Thorax.View
       toggleChevron = (e) -> $(e.target).parent('.panel').find('.panel-chevron').toggleClass 'glyphicon-chevron-right glyphicon-chevron-down'
       @$('.collapse').on 'hidden.bs.collapse', toggleChevron
       @$('.collapse').on 'show.bs.collapse', toggleChevron
-      this.insertFilenameLinks()
+    #  this.insertFilenameLinks()
 
   initialize: ->
     @selectedCategories = PopHealth.currentUser.selectedCategories(@collection)
@@ -122,6 +156,7 @@ class Thorax.Views.Dashboard extends Thorax.View
     @currentUser = PopHealth.currentUser.get 'username'
     @showAggregateResult = PopHealth.currentUser.showAggregateResult()
     @opml = Config.OPML
+    #this.insertFilenameLinks()
 
   toggleAggregateShow: (e) ->
     shown = PopHealth.currentUser.showAggregateResult()
@@ -139,42 +174,6 @@ class Thorax.Views.Dashboard extends Thorax.View
     PopHealth.currentUser.get 'effective_date'
   effective_start_date: ->
     PopHealth.currentUser.get 'effective_start_date'
-
-  dlFileName: (n)->
-    prefs = PopHealth.currentUser.get 'preferences'
-    fname='/api/reports/'
-    fname += PopHealth.currentUser.cmsid || ''
-    if prefs.c4filters
-      fname +='_' if fname.length > 0
-      fname+=prefs.c4filters.join('_')
-    fname +='_' if ! fname.endsWith('/')
-    if n==3
-      fname+='qrda_cat3.xml'
-      qmark=false
-      ed=this.effective_date()
-      if ed
-        fname+='?'
-        qmark=true
-        fname += "effective_date=#{ed}"
-      if @provider_id
-        if qmark then fname+='&' else fname+='?'
-        fname+="provider_id=#{@provider_id}"
-    else  # n==1
-      fname += "cat1.zip?cmsid=#{PopHealth.currentUser.cmsid}"
-    fname
-
-  insertFilenameLinks: ->
-    $('#cat3link').attr('href', this.dlFileName(3))
-    $('#cat1link').attr('href', this.dlFileName(1))
-
-  fnameRemoveMeasure: (cmsid) ->
-    PopHealth.currentUser.cmsid=PopHealth.currentUser.cmsid.replace(cmsid,'')
-    this.insertFilenameLinks()
-
-  fnameAddMeasure: (cmsid) ->
-    PopHealth.currentUser.cmsid = cmsid # not handling multiples yet
-    this.insertFilenameLinks()
-
 
   categoryFilterContext: (category) ->
     selectedCategory = @selectedCategories.findWhere(category: category.get('category'))
@@ -260,10 +259,8 @@ class Thorax.Views.Dashboard extends Thorax.View
     measure = $cb.model()
     if $cb.is('.active')
       @selectedCategories.selectMeasure measure
-      this.fnameAddMeasure(measure.get('cms_id'))
     else
       @selectedCategories.removeMeasure measure
-      this.fnameRemoveMeasure(measure.get('cms_id'))
     $cb.closest('.panel-collapse').prev('.panel-heading').find('.measure-count').text $cbs.filter('.active').length
 
   toggleCategory: (e) ->

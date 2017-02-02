@@ -14,12 +14,12 @@ module QME
 
       # drop any cached measure result calculations for the modified patient
       QME::PatientCache.where('value.medical_record_id' => id).destroy()
-      
+
       # get a list of cached measure results for a single patient
-      sample_patient =  QME::PatientCache.where({}).first
+      sample_patient = QME::PatientCache.where({}).first
       if sample_patient
-        cached_results =  QME::PatientCache.where({'value.patient_id' => sample_patient['value']['patient_id']})
-        
+        cached_results = QME::PatientCache.where({'value.patient_id' => sample_patient['value']['patient_id']})
+
         # for each cached result (a combination of measure_id, sub_id, effective_date and test_id)
         cached_results.each do |measure|
           # recalculate patient_cache value for modified patient
@@ -27,20 +27,20 @@ module QME
           measure_model = QME::QualityMeasure.new(value['measure_id'], value['sub_id'], value['test_id'])
           oid_dictionary = OidHelper.generate_oid_dictionary(measure_model)
           map = QME::MapReduce::Executor.new(value['measure_id'], value['sub_id'],
-            'effective_start_date' => value['effective_start_date'],
-            'effective_date' => value['effective_date'], 'test_id' => value['test_id'],
-            'oid_dictionary' => oid_dictionary)
+                                             'effective_start_date' => value['effective_start_date'],
+                                             'effective_date' => value['effective_date'], 'test_id' => value['test_id'],
+                                             'oid_dictionary' => oid_dictionary)
           map.map_record_into_measure_groups(id)
         end
       end
-      
+
       # remove the query totals so they will be recalculated using the new results for
       # the modified patient
 
       QME::QualityReport.where({}).each do |qr|
         measure_model = QME::QualityMeasure.new(qr['measure_id'], qr['sub_id'], qr['test_id'])
         oid_dictionary = OidHelper.generate_oid_dictionary(measure_model)
-        qr.calculate({"recalculate"=>true, "oid_dictionary" =>oid_dc},true)
+        qr.calculate({"recalculate" => true, "oid_dictionary" => oid_dc}, true)
       end
     end
 
@@ -51,21 +51,13 @@ module QME
       query = {measure_id: measure_id, sub_id: sub_id}
       query.merge! @parameter_values
       m = QME::QualityMeasure.where(:hqmf_id => measure_id).first
-      if (! m[:prefilters])
-        qr = self.find_or_create_by(query)
-      else
-        begin
-          qr = self.find_by(query) # incredibly stupid mongoid error on not found
-        rescue => e
-          # should we make sure it is a not found error?
-          params= query.except!('prefilter')
-          # replicating measure prefilters here; alternative: stringify prefilter value
-          params[:prefilters] = m[:prefilters]
-          self.create(params)
-        end
-
+      params=query
+      if (! m[:prefilters].nil?)
+        params= query.except!('prefilter')
+        # replicating measure prefilters here; alternative: stringify prefilter value
+        params[:prefilters] = m[:prefilters]
       end
+      qr = self.find_or_create_by(params)
     end
-
   end
 end
