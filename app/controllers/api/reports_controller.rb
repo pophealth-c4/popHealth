@@ -97,7 +97,7 @@ module Api
         if !pc['value.manual_exclusion']
           p = Record.find(pc['value.patient_id'])
           authorize! :read, p
-          patients.push(p)
+          patients.push({:record => p, :sub_id => pc['value.sub_id']})
         end
       end
       end_date = params["effective_date"] || current_user.effective_date || Time.gm(2015, 12, 31)

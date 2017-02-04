@@ -77,9 +77,11 @@ module C4Helper
     def pluck(outfilepath, patients)
       #, Zip::File::CREATE
       Zip::OutputStream.open(outfilepath) do |zout|
-        patients.each do |patient|
+        patients.each do |patient_hash|
+          patient=patient_hash[:record]
+          pmeas=@measures.select{|m| m[:sub_id] == patient_hash[:sub_id] }
           zout.put_next_entry(make_name(patient)+'.xml')
-          zout.puts(@exporter.export(patient, @measures,@start_date, @end_date, nil, 'r3_1'))
+          zout.puts(@exporter.export(patient, pmeas, @start_date, @end_date, nil, 'r3_1'))
         end
         zout.close
       end
