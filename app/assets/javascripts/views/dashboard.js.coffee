@@ -77,19 +77,24 @@ class Thorax.Views.ResultsView extends Thorax.View
       fname +='_' if fname.length > 0
       fname+=prefs.c4filters.join('_')
     fname +='_' if ! fname.endsWith('/')
+    qmark=false
     if n==3
       fname+='qrda_cat3.xml'
-      qmark=false
       ed=@model.get('effective_date')
       if ed
         fname+='?'
         qmark=true
         fname += "effective_date=#{ed}"
-      if @provider_id
-        if qmark then fname+='&' else fname+='?'
-        fname+="provider_id=#{@provider_id}"
     else  # n==1
-      fname += "cat1.zip?cmsid=#{PopHealth.currentUser.cmsid}"
+      fname += 'cat1.zip'
+      if qmark then fname+='&' else fname +='?'
+      qmark=true
+      fname += "cmsid=#{PopHealth.currentUser.cmsid}"
+    if @provider_id
+      if qmark then fname+='&' else fname+='?'
+      qmark=true
+      fname+="provider_id=#{@provider_id}"
+
     fname
 
   shouldDisplayPercentageVisual: -> !@model.isContinuous() and PopHealth.currentUser.shouldDisplayPercentageVisual()
