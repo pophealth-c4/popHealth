@@ -275,35 +275,6 @@ module Api
           qc.delete #update_attribute(:status, {:state => nil, :log => ''})
         end
 
-        # QME::QualityReport.where(measure_id: params[:id]).each do |qc|
-        #   authorize! :recalculate, qc
-        #   qc.calculate({"oid_dictionary" => OidHelper.generate_oid_dictionary(qc.measure_id),
-        #                 'recalculate' => true}, false)
-        #   log_api_call LogAction::UPDATE, "Force a clinical quality calculation"
-        # end
-        # pc_coll=$mongo_client.database.collection('patient_cache')
-        # QME::ManualExclusion.all.each do |me|
-        #   # was doing this with mongoid -- took 4 lines and was not working
-        #   pc_coll.update_one({'value.medical_record_id': me['medical_record_id']}, {'$set': {'value.manual_exclusion': true}})
-        # end
-        # log_api_call LogAction::EXPORT, "QRDA Category 3 report"
-        # providers=nil
-        # temp HACK
-        # filters['provider_ids']=['587650be20d442626204f6d5']
-        # if !filters['provider_ids'].nil?
-        #   filters['provider_ids'].each do |prid|
-        #     provider = Provider.find(prid)
-        #     authorize! :read, provider
-        #     providers = [] if providers.nil?
-        #     providers.push(provider)
-        #   end
-        # end
-
-        # cat3helper = C4Helper::Cat3Helper.new
-        # cat3xml= cat3helper.cat3(filters['provider_ids'], providers, filepath)
-        # what to do if there are no candidates after a filter? make empty zips?
-        # This next line is probably wrong. patient_results needs IPP params and a QR ID
-        # we don't have a qr id but we probably should
       end
       #send_file(zipfilepath, {:disposition => 'attachment'})
       #provs=$mongo_client.database.collection('query_cache').find({'measure_id' => {'$in':current_user.preferences['selected_measure_ids']}}).collect{|q| q['filters']['providers'][0]}.uniq
@@ -319,27 +290,7 @@ module Api
       current_user.preferences['c4filters']=nil
       current_user.save
       QME::QualityReport.where(:measure_id => params[:id]).delete
-      # each do |qc|
-      #   authorize! :recalculate, qc
-      #   meas_subs[qc.measure_id].push(qc.sub_id) # multiple instances of sub id ok
-      #   qc.delete
-      # end
-      # temp hack
       redirect_to '/#providers/'+params[:default_provider_id]
-      # meas_subs.each do |measure, arr|
-      #   arr.each do |sub|
-      #     qc = QME::QualityReport.find_or_create(measure, sub, {})
-      #     authorize! :recalculate, qc
-      #     qc.calculate({"oid_dictionary" => OidHelper.generate_oid_dictionary(qc.measure_id),
-      #                   'recalculate' => true}, false)
-      #   end
-      # end
-      # log_api_call LogAction::UPDATE, "Force a clinical quality calculation"
-      #
-      # render json: paginate(patient_results_api_query_url(),
-      #                       PatientCache.where(build_patient_filter).only(
-      #                           '_id', 'value.medical_record_id', 'value.first', 'value.last', 'value.birthdate',
-      #                           'value.manual_exclusion', 'value.gender', 'value.patient_id'))
     end
 
     def reset_patient_cache
@@ -357,24 +308,7 @@ module Api
       $mongo_client.database.collection('manual_exclusions').delete_many(
           {'measure_id': {'$in': measures}, 'sub_id': {'$in': subs}, 'medical_record_id': {'$in': mrns}})
 
-      # pcache =$mongo_client.database.collection('patient_cache')
-      # backup= $mongo_client.database.collection(:patient_cache_bak);
-      # if backup.count > pcache.count
-      #   # restore to patient_cache
-      #   pcache.drop()
-      #   $mongo_client.database.collection(:patient_cache).insert_many(backup.find({}).to_a)
-      # end
-      # backup.drop() #backup.find({}).delete_many
-      # backup.insert_many($mongo_client.database.collection('patient_cache').find({}).to_a)
     end
-
-    #if lastqc
-    #      render json: paginate(patient_results_api_query_url(lastqc),
-    #                             lastqc.patient_results.where(build_patient_filter).only('_id', 'value.medical_record_id',
-    #                                                                                     'value.first', 'value.last', 'value.birthdate',
-    #                                                                                     'value.gender', 'value.patient_id'))
-    #     end
-
 
     api :GET, '/queries/:id/patient_results[?population=true|false]',
         "Retrieve patients relevant to a clinical quality measure calculation"

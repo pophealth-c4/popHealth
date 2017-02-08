@@ -15,7 +15,9 @@ class Thorax.Views.ResultsView extends Thorax.View
         # HACK alert: This was currently breaking in an unforgiveably stupid way
         parr = @model.get['providers']
         if parr && parr.length && typeof(parr[0]) == 'undefined'
-          parr[0]= PopHealth.currentUser.provider_id
+          provider = this.provider_id || PopHealth.rootProvider.id || PopHealth.currentUser.provider_id
+          PopHealth.currentUser.provider_id = this.provider_id = provider
+          parr[0]=provider
           # end HACK alert
         if @model.get('sub_id')
           measureid = String(@model.get('measure_id')) + String(@model.get('sub_id'))
@@ -161,7 +163,12 @@ class Thorax.Views.Dashboard extends Thorax.View
     @currentUser = PopHealth.currentUser.get 'username'
     @showAggregateResult = PopHealth.currentUser.showAggregateResult()
     @opml = Config.OPML
-    #this.insertFilenameLinks()
+    # HACK alert: This was currently breaking in an unforgiveably stupid way
+    provider = this.provider_id || PopHealth.rootProvider.id
+    this.provider_id=provider
+      # end HACK alert
+
+#this.insertFilenameLinks()
 
   toggleAggregateShow: (e) ->
     shown = PopHealth.currentUser.showAggregateResult()

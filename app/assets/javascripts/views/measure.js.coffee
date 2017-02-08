@@ -57,13 +57,15 @@ class Thorax.Views.MeasureView extends Thorax.LayoutView
 
   resetAllFiltersShow: (event) ->
     # hack to prevent subsequent page from looking for dead query_cache
-    delete this.submeasure.queries[this.provider_id]
+    provider = this.provider_id || PopHealth.rootProvider.id
+    this.provider_id=provider
+    delete this.submeasure.queries[provider]
     $.post(
       'api/queries/'+this.submeasure.attributes.id+'/clearfilters'
-      $.param({default_provider_id : this.provider_id})
-      (data) ->
-        PopHealth.currentUser.get('preferences').c4filters = null
-        # Backbone.history.navigate('/#providers/'+this.provider_id)
+      $.param({default_provider_id : provider})
+#      (data) ->
+  #      PopHealth.currentUser.get('preferences').c4filters = null
+#        Backbone.history.navigate('/#providers/'+this.provider_id)
     )
 
   saveFilter: (filter, url) ->
@@ -75,6 +77,8 @@ class Thorax.Views.MeasureView extends Thorax.LayoutView
       if item.items and item.items.length
         json[item.field] = item.items
         c4filters.push(item.field)
+    provider = this.provider_id || PopHealth.rootProvider.id
+    this.provider_id=provider
     json.default_provider_id=this.provider_id
     $.post(
       url
