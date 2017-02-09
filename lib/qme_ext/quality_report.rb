@@ -50,11 +50,12 @@ module QME
       @parameter_values[:filters] = self.normalize_filters(@parameter_values[:filters])
       query = {measure_id: measure_id, sub_id: sub_id}
       query.merge! @parameter_values
-      m = QME::QualityMeasure.where(:hqmf_id => measure_id).first
-      params=query
-      if (! m[:prefilters].nil?)
-        params= query.except!('prefilter')
-        # replicating measure prefilters here; alternative: stringify prefilter value
+      # PROBLEM: prefilter when present has format that will never match anything
+      params= query.except!('prefilter')
+      m=nil
+      m = QME::QualityMeasure.where(:hqmf_id => params[:measure_id], :sub_id=> params[:sub_id]).first #rescue # bogus setting error on no docs
+      if (m.present? && m[:prefilters].present?)
+        # replicating correct measure prefilters here; alternative: stringify prefilter value
         params[:prefilters] = m[:prefilters]
       end
       qr = self.find_or_create_by(params)
