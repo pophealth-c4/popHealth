@@ -76,19 +76,20 @@ module C4Helper
 
     def pluck(outfilepath, patients)
       #, Zip::File::CREATE
-      if patients && patients.length
+      if patients && patients.length > 0
         Zip::OutputStream.open(outfilepath) do |zout|
-          patients.each do |patient_hash|
-            patient=patient_hash[:record]
-            pmeas=@measures.select { |m| m[:sub_id] == patient_hash[:sub_id] }
-            zout.put_next_entry(make_name(patient)+'.xml')
-            zout.puts(@exporter.export(patient, pmeas, @start_date, @end_date, nil, 'r3_1'))
-          end
-          zout.close
+            patients.each do |patient_hash|
+              patient=patient_hash[:record]
+              pmeas=@measures.select { |m| m[:sub_id] == patient_hash[:sub_id] }
+              zout.put_next_entry(make_name(patient)+'.xml')
+              zout.puts(@exporter.export(patient, pmeas, @start_date, @end_date, nil, 'r3_1'))
+            end
+            zout.close
         end
       else
-        File.open(outfilepath) do |zout|
-          zout.puts("'\x50\x4b\x05\x06\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0‌​0\x00\x00\x00\x00\x0‌​0\x00\x00'")
+        # clumsy alternative; add a bogus file to the zip and then delete it. UGH!
+        File.open(outfilepath,'w') do |zout|
+          zout.print("\x50\x4b\x05\x06\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00")
         end
       end
     end

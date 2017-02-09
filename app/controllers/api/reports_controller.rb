@@ -104,7 +104,7 @@ module Api
       end_date = params["effective_date"] || current_user.effective_date || Time.gm(2015, 12, 31)
       start_date = params["effective_start_date"] || current_user.effective_start_date || end_date.years_ago(1)
       c4h = C4Helper::Cat1ZipFilter.new(measures, start_date, end_date)
-      c4h.pluck(filepath, patients) if patients.length > 0
+      c4h.pluck(filepath, patients)
       send_file(filepath, type: "application/zip", disposition: 'attachment')
       nil
     end
