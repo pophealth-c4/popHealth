@@ -80,7 +80,7 @@ module C4Helper
         Zip::OutputStream.open(outfilepath) do |zout|
             patients.each do |patient_hash|
               patient=patient_hash[:record]
-              pmeas=@measures.select { |m| m[:sub_id] == patient_hash[:sub_id] }
+              pmeas=@measures.select { |m| patient_hash[:sub_id].include?(m[:sub_id]) }
               zout.put_next_entry(make_name(patient)+'.xml')
               zout.puts(@exporter.export(patient, pmeas, @start_date, @end_date, nil, 'r3_1'))
             end
