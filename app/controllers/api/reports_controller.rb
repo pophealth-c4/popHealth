@@ -102,9 +102,10 @@ module Api
             if elt[:mrn] == p[:medical_record_number]
               elt[:sub_id] = elt[:sub_id].push(pc['value.sub_id']).uniq
               p=nil
+              break
             end
           end # else
-          patients.push({:mrn => p[:medical_record_number], :record => p, :sub_id => [pc['value.sub_id']]}) if p
+          patients.push({:mrn => p[:medical_record_number], :record => p, :sub_id => [pc['value.sub_id']]}) if p.present?
         end
       end
       end_date = params["effective_date"] || current_user.effective_date || Time.gm(2015, 12, 31)
