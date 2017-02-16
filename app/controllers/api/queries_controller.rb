@@ -46,6 +46,9 @@ module Api
           val['oid'] if not val.nil?
         },
         'providerTypes' => method(:get_svs_value),
+        'asOf' => Proc.new { |key, txt|
+          Date.new(txt)
+        },
         'age' => Proc.new { |key, txt|
           res={}
           m = /(>=?)\s*(\d+)/.match(txt)
@@ -73,7 +76,7 @@ module Api
             next res
           end
           puts "ERROR: Bad input to age:#{txt}"
-        },
+        }
     }
 
 
@@ -200,6 +203,11 @@ module Api
     def filter
       namekey=[]
       filters={}
+      bundle = HealthDataStandards::CQM::Bundle.all.sort(:version => :desc).first
+      pcache = PatientCache.first
+      effective_date = pcache ? pcache['value']['effective_date'] : bundle.effective_date
+      pcache = nil
+      filter_options= {:effective_date => effective_date, :bundle_id => bundle._id}
       #authorize! :recalculate, qc
       # add filters here
       params.each_pair do |key, val|
@@ -219,6 +227,8 @@ module Api
                   filters[key]={:oid => []}
                 end
                 filters[key][:oid].push(res)
+              elsif key== 'asOf'
+                filter_options[:as_of] = res;
               else
                 filters[key].push(res)
               end
@@ -238,13 +248,8 @@ module Api
       #now do something with filters
       # todo: Date.new should be replaced by meaningful
       # todo: :bundle_id in options Is there only ever one bundle
-      bundle = HealthDataStandards::CQM::Bundle.all.sort(:version => :desc).first
-      pcache = PatientCache.first
-      effective_date = pcache ? pcache['value']['effective_date'] : bundle.effective_date
-      pcache = nil
       mrns = []
-      records = Cypress::RecordFilter.filter(Record, filters, {
-          :effective_date => effective_date, :bundle_id => bundle._id})
+      records = Cypress::RecordFilter.filter(Record, filters, filter_options)
       numrecs = records.count rescue nil
       unless numrecs.nil?
         reset_patient_cache
