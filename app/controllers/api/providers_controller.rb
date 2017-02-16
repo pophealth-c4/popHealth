@@ -36,11 +36,13 @@ module Api
         end
       else
         log_api_call LogAction::VIEW, "Get list of providers"
-        my_prid=current_user.practice.provider_id
-        other_practices = Practice.only(:provider_id).all.map{|p| p[:provider_id]}.reject{|id| id==my_prid}
-        @providers = Provider.or({parent_id: my_prid},
+        if current_user.practice
+          my_prid=current_user.practice.provider_id
+          other_practices = Practice.only(:provider_id).all.map{|p| p[:provider_id]}.reject{|id| id==my_prid}
+          @providers = Provider.or({parent_id: my_prid},
                        {_id: my_prid}).reject{|p| other_practices.include?(p[:_id])}
-        authorize_providers(@providers)
+          authorize_providers(@providers)
+        end
       end
       render json: @providers
     end
