@@ -47,7 +47,8 @@ module Api
         },
         'providerTypes' => method(:get_svs_value),
         'asOf' => Proc.new { |key, txt|
-          Date.new(txt)
+          # the filter needs a Time object, not a Date object (Ah, Ruby)
+          Date.strptime(txt, '%m/%d/%Y').to_time
         },
         'age' => Proc.new { |key, txt|
           res={}

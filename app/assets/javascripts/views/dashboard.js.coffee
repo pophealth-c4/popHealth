@@ -77,7 +77,7 @@ class Thorax.Views.ResultsView extends Thorax.View
     fname += PopHealth.currentUser.cmsid || ''
     if prefs.c4filters
       fname +='_' if fname.length > 0
-      fname+=prefs.c4filters.join('_')
+      fname+=(prefs.c4filters.filter (f)=> "asOf"!=f).join('_')
     fname +='_' if ! fname.endsWith('/')
     qmark=false
     if n==3
