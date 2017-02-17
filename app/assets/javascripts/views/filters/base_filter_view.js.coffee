@@ -49,6 +49,10 @@ class Thorax.Views.BaseFilterView extends Thorax.View
     txt = $(elementSelector).text()
     return {field: fieldName, items: if txt?.length then [txt] else []}
 
+  getValue: (elementSelector, fieldName)->
+    txt = $(elementSelector).val()
+    return {field: fieldName, items: if txt?.length then [txt] else []}
+
   getGender: ()->
     res = {field: "genders", items: []}
     # got to be a better way to handle checkboxes

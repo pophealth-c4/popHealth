@@ -40,7 +40,8 @@ class Thorax.Views.FilterPatients extends Thorax.Views.BaseFilterView
     filter.push @getSelect2Values "#raceTags", "races"
     filter.push @getSelect2Values "#ethnicityTags", "ethnicities"
     filter.push @getSelect2Values "#problemListTags", "problems"
-    filter.push  @getText "#ageTags", "age"
+    filter.push @getText "#ageTags", "age"
+    filter.push @getValue "#asOfTags", "asOf"
     filter.push @getGender()
     @filterPatientsDialog.modal('hide')
     @trigger('filterSaved', filter)
