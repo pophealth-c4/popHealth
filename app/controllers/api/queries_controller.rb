@@ -72,8 +72,14 @@ module Api
           # OR
           m= /^\s*(\d+)\s*-+\s*(\d+)/.match(txt)
           unless m.nil?
-            res['min'] = m[1]
-            res['max'] = m[2]
+            res['min'] = m[1].to_i
+            res['max'] = m[2].to_i
+            next res
+          end
+          # else
+          m=/(\d+)/.match(txt)
+          if m.present?
+            res['min'] = res['max'] = m[1].to_i
             next res
           end
           puts "ERROR: Bad input to age:#{txt}"
