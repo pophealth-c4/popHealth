@@ -53,6 +53,8 @@ class Thorax.Views.ResultsView extends Thorax.View
         try
           $('#cat3link').attr('href', this.dlFileName(3))
           $('#cat1link').attr('href', this.dlFileName(1))
+          txt=this.dlFileName(0)
+          $('#filterorno').html('Filters: '+ txt) if txt
         catch
           console.log(@model)
           console.log(@model.attributes)
@@ -77,7 +79,12 @@ class Thorax.Views.ResultsView extends Thorax.View
     fname += PopHealth.currentUser.cmsid || ''
     if prefs.c4filters
       fname +='_' if fname.length > 0
-      fname+=prefs.c4filters.join('_')
+      if n == 0
+        return (prefs.c4filters.filter (f)=> "asOf"!=f).join(', ')
+      else
+        fname+=(prefs.c4filters.filter (f)=> "asOf"!=f).join('_')
+    else if n==0
+      return null
     fname +='_' if ! fname.endsWith('/')
     qmark=false
     if n==3
@@ -87,7 +94,7 @@ class Thorax.Views.ResultsView extends Thorax.View
         fname+='?'
         qmark=true
         fname += "effective_date=#{ed}"
-    else  # n==1
+    else
       fname += 'cat1.zip'
       if qmark then fname+='&' else fname +='?'
       qmark=true

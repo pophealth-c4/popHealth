@@ -59,9 +59,9 @@ module Cypress
 
     def self.build_age_query(age_filter, options)
       # filter only by a single age range, can be age < max, age > min, or min < age < max
-      effective_date = Time.at(options[:effective_date]).in_time_zone
+      effective_date = Time.at(options[:as_of]).in_time_zone
 
-      age_query = {}
+      age_query = []
 
       if age_filter['max']
         age_max = age_filter['max']
@@ -78,7 +78,7 @@ module Cypress
 
         req_birthdate = start_of_day - (age_max + 1).years + 1.day
 
-        age_query[:birthdate.gte] = req_birthdate
+        age_query.push({:birthdate => {'$gte' => req_birthdate}})
       end
       if age_filter['min']
         age_min = age_filter['min']
@@ -90,10 +90,10 @@ module Cypress
 
         req_birthdate = end_of_day - age_min.years
 
-        age_query[:birthdate.lte] = req_birthdate
+        age_query.push({:birthdate => {'$lte' => req_birthdate}})
       end
 
-      age_query
+      {'$and' => age_query}
     end
 
     def self.build_problem_query(problem_filters, options)

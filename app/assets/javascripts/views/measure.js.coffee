@@ -60,6 +60,7 @@ class Thorax.Views.MeasureView extends Thorax.LayoutView
     provider = this.provider_id || PopHealth.rootProvider.id
     this.provider_id=provider
     delete this.submeasure.queries[provider]
+    PopHealth.currentUser.get('preferences').c4filters=[];
     $.post(
       'api/queries/'+this.submeasure.attributes.id+'/clearfilters'
       $.param({default_provider_id : provider})
@@ -76,7 +77,7 @@ class Thorax.Views.MeasureView extends Thorax.LayoutView
     for item in filter
       if item.items and item.items.length
         json[item.field] = item.items
-        c4filters.push(item.field)
+        c4filters.push(item.field) if item.field!='asOf'
     provider = this.provider_id || PopHealth.rootProvider.id
     this.provider_id=provider
     json.default_provider_id=this.provider_id
@@ -87,6 +88,13 @@ class Thorax.Views.MeasureView extends Thorax.LayoutView
         PopHealth.currentUser.get('preferences').c4filters = c4filters
         Backbone.history.navigate('/#providers/'+json.default_provider_id)
     )
+
+  patientFilterNames: () ->
+    f=PopHealth.currentUser.get('preferences').c4filters
+    if (f && f.length)
+      return "Filters: #{f}"
+    else
+      return ''
 
   patientFilterSaved: (filter) ->
     @patientFilter = filter
