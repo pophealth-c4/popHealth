@@ -443,3 +443,7 @@ $table-border-color: white;
 .ui-autocomplete {
   z-index: 9999;
 }
+
+.ui-helper-hidden-accessible {
+  display: none;
+}
