@@ -221,6 +221,7 @@ module Api
         if not /^(controller|action|id|default_provider_id)/i === key
           (0...val.length).each do |i|
             value =val[i] || val[i.to_s]
+            namekey.push(key) unless key=='asOf'
             if /npis|tins|addresses/i === key
               key='provider_ids'
               value=value[:id]
@@ -249,7 +250,6 @@ module Api
               filters[key].push(value)
             end
           end
-          namekey.push(key) # random choice
         end
       end
       #now do something with filters
