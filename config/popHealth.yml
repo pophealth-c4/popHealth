@@ -53,8 +53,8 @@ defaults: &defaults
       - :root: author_root
         :extension: author_extension
       :device:
-        :name: device_name
-        :model: device_model
+        :name: 'PopHealth'
+        :model: '5.0.0'
       :addresses: []
       :telecoms: []
       :time:
