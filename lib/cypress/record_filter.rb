@@ -59,10 +59,12 @@ module Cypress
 
     def self.build_age_query(age_filter, options)
       # filter only by a single age range, can be age < max, age > min, or min < age < max
-      effective_date = Time.at(options[:as_of]).in_time_zone
-
+      if options[:as_of].present?
+        effective_date = Time.at(options[:as_of]).in_time_zone
+      else
+        effective_date = Time.at(options[:effective_date]).in_time_zone
+      end
       age_query = []
-
       if age_filter['max']
         age_max = age_filter['max']
         start_of_day = Time.local(effective_date.year, effective_date.month, effective_date.day, 0, 0, 0).in_time_zone
