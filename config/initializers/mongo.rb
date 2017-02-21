@@ -5,7 +5,7 @@ if $mongo_client.nil?
   port = MONGO_DB.cluster.addresses[0].port #Mongoid::Clients.default.cluster.addresses[0].port
   database=MONGO_DB.options[:database] #Mongoid::Clients.default.options[:database]
   options={}
-  options={:user => MONGO_DB.options[:user], :password=>MONGO_DB.options[:password]} if (MONGO_DB.options[:user].present?)
+  options={:auth_source => MONGO_DB.options[:auth_source], :user => MONGO_DB.options[:user], :password=>MONGO_DB.options[:password]} if (MONGO_DB.options[:user].present?)
   $mongo_client = Mongo::Client.new("mongodb://#{host}:#{port}/#{database}",options)
 
 end
