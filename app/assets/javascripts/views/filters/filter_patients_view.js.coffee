@@ -45,3 +45,11 @@ class Thorax.Views.FilterPatients extends Thorax.Views.BaseFilterView
     filter.push @getGender()
     @filterPatientsDialog.modal('hide')
     @trigger('filterSaved', filter)
+
+  effective_date: ->
+    user_date = PopHealth.currentUser.get 'effective_date'
+    if user_date
+      d = new Date(user_date *1000)
+    else
+      d = new Date();
+    return $.datepicker.formatDate('mm/dd/yy', d)
