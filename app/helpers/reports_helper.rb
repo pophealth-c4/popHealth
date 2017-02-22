@@ -1,7 +1,7 @@
 module ReportsHelper
   def generate_cat3(provider, effective_date, measure_ids)
     exporter = HealthDataStandards::Export::Cat3.new
-    effective_date ||= Time.gm(2012,12,31)
+    effective_date ||= Time.gm(2015,12,31)
     end_date = DateTime.new(effective_date.to_i, 12, 31)
     bndl = (b = HealthDataStandards::CQM::Bundle.all.sort(:version => :desc).first) ? b.version : 'n/a'
     use_r11 = /2016/ =~ bndl

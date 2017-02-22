@@ -51,8 +51,8 @@ module Api
           cat3ver='r2'
       end
       exporter = HealthDataStandards::Export::Cat3.new(cat3ver)
-      effective_date = params["effective_date"] || current_user.effective_date || Time.gm(2013, 12, 31)
-      effective_start_date = params["effective_start_date"] || current_user.effective_start_date || Time.gm(2012, 12, 31)
+      effective_date = params["effective_date"] || current_user.effective_date || Time.gm(2015, 12, 31)
+      effective_start_date = params["effective_start_date"] || current_user.effective_start_date || Time.gm(2014, 12, 31)
       end_date = Time.at(effective_date.to_i)
       provider = provider_filter = nil
       if params[:provider_id].present?
@@ -142,8 +142,8 @@ module Api
 
       measure = HealthDataStandards::CQM::Measure.where(id: params[:id]).first
 
-      end_date = params[:effective_date] || current_user.effective_date || Time.gm(2013, 12, 31)
-      start_date = params[:effective_start_date] || current_user.effective_start_date || Time.gm(2012, 12, 31)
+      end_date = params[:effective_date] || current_user.effective_date || Time.gm(2015, 12, 31)
+      start_date = params[:effective_start_date] || current_user.effective_start_date || Time.gm(2014, 12, 31)
 
       end_date = Time.at(end_date.to_i).strftime("%D")
       start_date = Time.at(start_date.to_i).strftime("%D")
@@ -279,8 +279,8 @@ module Api
         provider = Provider.find(params[:provider_id])
         authorize! :read, provider
 
-        end_date = params[:effective_date] || current_user.effective_date || Time.gm(2013, 12, 31)
-        start_date = params[:effective_start_date] || current_user.effective_start_date || Time.gm(2012, 12, 31)
+        end_date = params[:effective_date] || current_user.effective_date || Time.gm(2015, 12, 31)
+        start_date = params[:effective_start_date] || current_user.effective_start_date || Time.gm(2014, 12, 31)
 
         end_date = Time.at(end_date.to_i).strftime("%D")
         start_date = Time.at(start_date.to_i).strftime("%D")
@@ -344,7 +344,7 @@ module Api
       authorize! :read, patient
       measure_ids = params["measure_ids"].split(',')
       measures = HealthDataStandards::CQM::Measure.where(:hqmf_id.in => measure_ids)
-      end_date = params["effective_date"] || current_user.effective_date || Time.gm(2012, 12, 31)
+      end_date = params["effective_date"] || current_user.effective_date || Time.gm(2015, 12, 31)
       start_date = params["effective_start_date"] || current_user.effective_start_date || end_date.years_ago(1)
       render xml: exporter.export(patient, measures, start_date, end_date)
     end
