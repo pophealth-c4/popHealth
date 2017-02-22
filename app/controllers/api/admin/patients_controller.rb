@@ -8,7 +8,8 @@ module Api
         description "This resource allows for the management of clinical quality measures in the popHealth application."
       end
       include ApplicationHelper
-      
+      include LogsHelper
+
       before_filter :authenticate_user!
       before_filter :validate_authorization!
       skip_before_action :verify_authenticity_token
@@ -17,6 +18,7 @@ module Api
       formats ['json']
       example '{"patient_count":56}'
       def count
+        log_admin_api_call LogAction::VIEW, "Get patient count"
         json = {}
         json['patient_count'] = Record.count
         render :json => json
@@ -26,12 +28,13 @@ module Api
       param :file, nil, :desc => 'The zip file of patients to upload.', :required => true
       param :practice_id, String, :desc => "ID for the patient's Practice", :required => false
       param :practice_name, String, :desc => "Name for the patient's Practice", :required => false
-      
+
       def create
+        log_admin_api_call LogAction::ADD, "Upload patient ZIP file", true
         file = params[:file]
-        
+
         practice = get_practice_parameter(params[:practice_id], params[:practice_name])
-        
+
         FileUtils.mkdir_p(File.join(Dir.pwd, "tmp/import"))
         file_location = File.join(Dir.pwd, "tmp/import")
         file_name = "patient_upload" + Time.now.to_i.to_s + rand(1000).to_s
@@ -46,11 +49,57 @@ module Api
 
       api :DELETE, "/admin/patients", "Delete all patients in the database."
       def destroy
+        log_admin_api_call LogAction::DELETE, "Delete all patients", true
         Record.delete_all
         render status: 200, text: 'Patient records successfully removed from database.'
       end
 
-      private 
+      api :PUT, "/patient", "Load a single patient XML file into popHealth"
+      formats ['xml']
+      param :file, nil, :desc => "The XML patient file", :required => true
+      param :practice_id, String, :desc => "ID for the patient's Practice", :required => false
+      param :practice_name, String, :desc => "Name for the patient's Practice", :required => false
+      description "Upload a single XML file for a patient into popHealth."
+      def upload_single_patient
+        log_admin_api_call LogAction::ADD, "Upload single patient", true
+
+        file = StringIO.new(request.body.read)
+        practice = get_practice_parameter(params[:practice_id], params[:practice_name])
+
+        FileUtils.mkdir_p(File.join(Dir.pwd, "tmp/import"))
+        file_location = File.join(Dir.pwd, "tmp/import")
+        file_name = "patient_upload" + Time.now.to_i.to_s + rand(1000).to_s
+
+        temp_file = File.new(file_location + "/" + file_name, "w")
+
+        File.open(temp_file.path, "wb") { |f| f.write(file.read) }
+
+        begin
+          response_hash = BulkRecordImporter.import_file(temp_file,File.new(temp_file).read,nil,{},practice)
+          status_code = 200
+        rescue
+          status_code = 500
+        end
+
+        if response_hash == nil
+          status_text = 'File not uploaded'
+          status_code = 400
+        elsif response_hash == false
+          status_text = 'Patient could not be saved'
+          status_code = 400
+        elsif response_hash == true
+          status_text = "Patient upload successful"
+          status_code = 200
+        else
+          status_text = response_hash[:message]
+          status_code = response_hash[:status_code]
+        end
+
+        FileUtils.rm_rf Dir.glob("tmp/import/*")
+        render text: status_text, status: status_code
+      end
+
+      private
 
       def validate_authorization!
         authorize! :admin, :users
