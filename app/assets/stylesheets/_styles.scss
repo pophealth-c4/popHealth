@@ -447,3 +447,7 @@ $table-border-color: white;
 .ui-helper-hidden-accessible {
   display: none;
 }
+
+.dropdown-btn {
+  z-index: 400 !important;
+}
