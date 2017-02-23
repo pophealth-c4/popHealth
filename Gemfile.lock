@@ -15,7 +15,7 @@ GIT
 
 GIT
   remote: https://github.com/pophealth-c4/health-data-standards.git
-  revision: e074ae47697e45513784cc529ae8b1e1ed4f0cf9
+  revision: 3bae84d9a4bc5682b44668525f7e90a3d6f82dda
   branch: mongoid5R2
   specs:
     health-data-standards (3.6.1)
