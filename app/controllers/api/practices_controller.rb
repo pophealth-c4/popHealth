@@ -39,7 +39,7 @@ module Api
         identifier = CDAIdentifier.new(:root => "Organization", :extension => @practice.organization)
         provider = Provider.new(:given_name => @practice.name)
         provider.cda_identifiers << identifier
-        provider.parent = Provider.root
+        # provider.parent = Provider.root  # was this just cut and paste from providers?
         provider.save
         @practice.provider = provider
         

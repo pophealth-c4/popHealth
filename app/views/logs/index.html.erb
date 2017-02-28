@@ -60,7 +60,7 @@
         <% if current_user.admin? %>
           <th><%= link_to 'Affected User', time_range_params_plus(:sort => 'affected_user') %></th>
         <% end %>
-        <th><%= link_to 'File SHA1 Hash', time_range_params_plus(:sort => 'checksum') %></th>
+        <!-- <th><%= link_to 'File SHA1 Hash', time_range_params_plus(:sort => 'checksum') %></th> -->
       </tr>
       <% @logs.each do |log| -%>
       <tr>
@@ -70,7 +70,7 @@
         <td><%= log.description %></td>
         <td><%= log.medical_record_number %></td>
         <td><%= log.affected_user %></td>
-        <td><%= log.checksum %></td>
+        <!-- <td><%= log.checksum %></td> -->
       </tr>
       <% end -%>
     </table>
