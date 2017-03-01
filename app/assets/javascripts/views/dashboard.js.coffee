@@ -280,6 +280,9 @@ class Thorax.Views.Dashboard extends Thorax.View
       @selectedCategories.selectMeasure measure
     else
       @selectedCategories.removeMeasure measure
+      $.post(
+        'api/queries/'+measure.get('id')+'/clearfilters'
+        $.param({default_provider_id : this.provider_id}))
     $cb.closest('.panel-collapse').prev('.panel-heading').find('.measure-count').text $cbs.filter('.active').length
 
   toggleCategory: (e) ->

@@ -290,7 +290,7 @@ module Api
       end
       #send_file(zipfilepath, {:disposition => 'attachment'})
       #provs=$mongo_client.database.collection('query_cache').find({'measure_id' => {'$in':current_user.preferences['selected_measure_ids']}}).collect{|q| q['filters']['providers'][0]}.uniq
-      redirect_to '/#providers/'+params[:default_provider_id]
+      redirect_to '/ #providers/'+params[:default_provider_id]
     end
 
     api :POST, '/queries/:id/clearfilters', "Clear all filters and recalculate"
@@ -298,10 +298,8 @@ module Api
 
     def clearfilters
       reset_patient_cache
-      PatientCache.delete_all
       current_user.preferences['c4filters']=nil
       current_user.save
-      QME::QualityReport.where(:measure_id => params[:id]).delete
       redirect_to '/#providers/'+params[:default_provider_id]
     end
 
@@ -319,7 +317,10 @@ module Api
       end
       $mongo_client.database.collection('manual_exclusions').delete_many(
           {'measure_id': {'$in': measures}, 'sub_id': {'$in': subs}, 'medical_record_id': {'$in': mrns}})
-
+      log_admin_controller_call LogAction::DELETE, "Remove caches"
+      HealthDataStandards::CQM::QueryCache.delete_all
+      PatientCache.delete_all
+      Mongoid.default_client["rollup_buffer"].drop()
     end
 
     api :GET, '/queries/:id/patient_results[?population=true|false]',
