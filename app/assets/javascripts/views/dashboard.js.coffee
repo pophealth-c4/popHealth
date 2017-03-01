@@ -37,7 +37,8 @@ class Thorax.Views.ResultsView extends Thorax.View
           else
             @timeout ?= setInterval =>
               @model.fetch()
-            , 3000
+            , 10000 # we had to set this from 3000 to 10000 to pass certification on CMS171,172 which
+                    # have a lot of submeasures.
       rescale: ->
         if @model.isPopulated()
           if PopHealth.currentUser.populationChartScaledToIPP() then @popChart.maximumValue(@model.result().IPP) else @popChart.maximumValue(PopHealth.patientCount)
