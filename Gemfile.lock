@@ -8,13 +8,7 @@ GIT
       mongoid-compatibility
 
 GIT
-  remote: https://github.com/popHealth-c4/hqmf2js.git
-  revision: a21c7ac1ac185becff6f99c5e9b23a0f730ecb76
-  specs:
-    hqmf2js (1.3.0)
-
-GIT
-  remote: https://github.com/pophealth-c4/health-data-standards.git
+  remote: https://github.com/OSEHRA/health-data-standards.git
   revision: 3bae84d9a4bc5682b44668525f7e90a3d6f82dda
   branch: mongoid5R2
   specs:
@@ -33,6 +27,12 @@ GIT
       rubyzip (>= 1.0.0)
       uuid (~> 2.3.7)
       zip-zip
+
+GIT
+  remote: https://github.com/OSEHRA/hqmf2js.git
+  revision: a21c7ac1ac185becff6f99c5e9b23a0f730ecb76
+  specs:
+    hqmf2js (1.3.0)
 
 GIT
   remote: https://github.com/projectcypress/quality-measure-engine.git
@@ -121,7 +121,7 @@ GEM
       responders
       warden (~> 1.2.3)
     docile (1.1.5)
-    domain_name (0.5.20161129)
+    domain_name (0.5.20170223)
       unf (>= 0.0.5, < 1.0.0)
     erubis (2.7.0)
     eventmachine (1.2.1)

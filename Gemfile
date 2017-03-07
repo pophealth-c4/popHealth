@@ -8,12 +8,12 @@ gem 'mongo', '~>2.4.1'
 # gem 'mongoid', '~> 4.0.2'
 gem 'bson_ext', '~> 1.5.1'
 gem 'delayed_job_mongoid', github: 'collectiveidea/delayed_job_mongoid'
-gem 'health-data-standards', git: 'https://github.com/pophealth-c4/health-data-standards.git', branch: 'mongoid5R2'
+gem 'health-data-standards', git: 'https://github.com/OSEHRA/health-data-standards.git', branch: 'mongoid5R2'
 
 gem 'quality-measure-engine',
     git: 'https://github.com/projectcypress/quality-measure-engine.git', branch: 'bump_mongoid'
 
-gem "hqmf2js", :git=> "https://github.com/popHealth-c4/hqmf2js.git"
+gem "hqmf2js", :git=> "https://github.com/OSEHRA/hqmf2js.git"
 gem 'nokogiri', '~> 1.6.8'
 gem 'rubyzip', '1.2.0'
 gem 'net-ssh', '2.9.1'
