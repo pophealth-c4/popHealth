@@ -65,7 +65,7 @@ class LogsHelperTest < ActionView::TestCase
   end
 
   test "should log MRN when patient is available" do
-    @patient = Record.first
+    @patient = Record.where({"medical_record_number":{"$exists" => true}}).first
     assert_difference('Log.count') do
       log_call LogAction::ADD, "Test", "Test details", true, true, true, true
     end

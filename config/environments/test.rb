@@ -29,6 +29,9 @@ PopHealth::Application.configure do
 
   config.eager_load = false
 
+  # Explicitly randomized test execution order (default in Rails 5)
+  config.active_support.test_order = :random
+
   # Use SQL instead of Active Record's schema dumper when creating the test database.
   # This is necessary if your schema can't be completely dumped by the schema dumper,
   # like if you have constraints or database-specific column types
