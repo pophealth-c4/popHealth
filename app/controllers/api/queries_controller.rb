@@ -201,7 +201,7 @@ module Api
       qr.calculate({"oid_dictionary" => OidHelper.generate_oid_dictionary(qr.measure_id),
                     'recalculate' => true}, true)
       log_api_call LogAction::UPDATE, "Force a clinical quality calculation"
-      render qr
+      render json: qr
     end
 
     api :POST, '/queries/:id/filter', "Apply a filter to an existing measure calculation"

@@ -5,6 +5,7 @@ module HealthDataStandards
       field :lower_is_better, type: Boolean
       # this is called in hds Measure but does not resolve correctly
       def data_criteria
+        return nil unless self['hqmf_document'] and self['hqmf_document']['data_criteria']
         self['hqmf_document']['data_criteria'].map { |key, val| { key => val } }
       end
       # replaced with the one from cypress for compatibility with their baroque processing
