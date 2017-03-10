@@ -7,7 +7,7 @@ gem 'mongoid', '~> 5.0.2'
 gem 'mongo', '~>2.4.1'
 # gem 'mongoid', '~> 4.0.2'
 gem 'bson_ext', '~> 1.5.1'
-gem 'delayed_job_mongoid', github: 'collectiveidea/delayed_job_mongoid'
+gem 'delayed_job_mongoid', git: 'https://github.com/collectiveidea/delayed_job_mongoid', tag: 'v2.2.0'
 gem 'health-data-standards', git: 'https://github.com/OSEHRA/health-data-standards.git', branch: 'mongoid5R2'
 
 gem 'quality-measure-engine',

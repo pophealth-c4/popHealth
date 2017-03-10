@@ -49,6 +49,8 @@ module Api
           cat3ver='r1_1'
         when /201[67]/
           cat3ver='r2'
+        else
+          cat3ver='r1'
       end
       exporter = HealthDataStandards::Export::Cat3.new(cat3ver)
       effective_date = params["effective_date"] || current_user.effective_date || Time.gm(2015, 12, 31)
