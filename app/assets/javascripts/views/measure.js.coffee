@@ -27,7 +27,6 @@ class Thorax.Views.MeasureView extends Thorax.LayoutView
     'click #define-provider-filter': 'defineProviderFilterShow'
     'click #define-patient-filter': 'definePatientFilterShow'
     'click #reset-all-filters': 'resetAllFiltersShow'
-    'click #reset-all-filters1': 'resetAllFiltersShow'
 
   context: ->
     _(super).extend @submeasure.toJSON(), measurementPeriod: moment(PopHealth.currentUser.get 'effective_date' * 1000).format('YYYY')
@@ -57,6 +56,7 @@ class Thorax.Views.MeasureView extends Thorax.LayoutView
 
   resetAllFiltersShow: (event) ->
     # hack to prevent subsequent page from looking for dead query_cache
+    event.preventDefault()
     provider = this.provider_id || PopHealth.rootProvider.id
     this.provider_id=provider
     delete this.submeasure.queries[provider]
