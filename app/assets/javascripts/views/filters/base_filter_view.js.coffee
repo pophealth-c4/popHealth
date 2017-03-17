@@ -27,6 +27,7 @@ class Thorax.Views.BaseFilterView extends Thorax.View
       placeholder: placeholder
       tags: true
       minimumResultsForSearch: Infinity
+      width: "100%"
     }
 
   setupTagIt: (elementSelector, placeholder) ->
