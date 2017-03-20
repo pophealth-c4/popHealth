@@ -53,7 +53,7 @@ module Api
         'age' => Proc.new { |key, txt|
           res={}
           m = /(>=?)\s*(\d+)/.match(txt)
-          m =  /(<=?)\s*(\d+)/.match(txt) if m.nil?
+          m = /(<=?)\s*(\d+)/.match(txt) if m.nil?
           unless m.nil?
             n=m[2].to_i # to_i?
             case m[1]
@@ -276,8 +276,8 @@ module Api
         PatientCache.not_in("value.medical_record_id" => mrns).each { |pc|
           val = pc['value']
           ManualExclusion.find_or_create_by(:measure_id => val['measure_id'], :sub_id => val['sub_id'],
-                                                 :medical_record_id => val['medical_record_id'],
-          :rationale => namekey, :user => current_user['_id'])
+                                            :medical_record_id => val['medical_record_id'],
+                                            :rationale => namekey, :user => current_user['_id'])
         }
         # new let page recalc
         PatientCache.delete_all
@@ -290,7 +290,7 @@ module Api
       end
       #send_file(zipfilepath, {:disposition => 'attachment'})
       #provs=$mongo_client.database.collection('query_cache').find({'measure_id' => {'$in':current_user.preferences['selected_measure_ids']}}).collect{|q| q['filters']['providers'][0]}.uniq
-      redirect_to '/ #providers/'+params[:default_provider_id]
+      redirect_to '/#providers/'+params[:default_provider_id]
     end
 
     api :POST, '/queries/:id/clearfilters', "Clear all filters and recalculate"
@@ -298,6 +298,7 @@ module Api
 
     def clearfilters
       reset_patient_cache
+      delete_patient_cache
       current_user.preferences['c4filters']=nil
       current_user.save
       redirect_to '/#providers/'+params[:default_provider_id]
@@ -317,6 +318,9 @@ module Api
       end
       $mongo_client.database.collection('manual_exclusions').delete_many(
           {'measure_id': {'$in': measures}, 'sub_id': {'$in': subs}, 'medical_record_id': {'$in': mrns}})
+    end
+
+    def delete_patient_cache
       log_admin_controller_call LogAction::DELETE, "Remove caches"
       HealthDataStandards::CQM::QueryCache.delete_all
       PatientCache.delete_all
