@@ -70,8 +70,8 @@ module Api
                             end_date,
                             cat3ver,
                             provider_filter)
-      FileUtils.mkdir('results') if !File.exist?('results')
-      File.open('results/'+fname, 'w') { |f| f.write(xml) }
+      # FileUtils.mkdir('results') if !File.exist?('results')
+      # File.open('results/'+fname, 'w') { |f| f.write(xml) }
       render xml: xml, content_type: "attachment/xml"
     end
 
