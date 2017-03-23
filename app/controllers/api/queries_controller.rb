@@ -106,7 +106,8 @@ module Api
 
       if current_user.preferences.show_aggregate_result && !@qr.aggregate_result && !APP_CONFIG['use_opml_structure']
         cv = @qr.measure.continuous_variable
-        aqr = QME::QualityReport.where(measure_id: @qr.measure_id, sub_id: @qr.sub_id, 'filters.providers' => [Provider.root._id.to_s], effective_date: @qr.effective_date).first
+        #aqr = QME::QualityReport.where(measure_id: @qr.measure_id, sub_id: @qr.sub_id, 'filters.providers' => [Provider.root._id.to_s], effective_date: @qr.effective_date).first
+        aqr = QME::QualityReport.where(measure_id: @qr.measure_id, sub_id: @qr.sub_id, 'filters.providers' => [get_parent_provider_qsi(@qr[:filters][:providers][0])], effective_date: @qr.effective_date).first
         if aqr.result
           if cv
             @qr.aggregate_result = aqr.result.OBSERV
@@ -138,6 +139,7 @@ module Api
 
     def create
       options = {}
+      prefilter = {}
       options[:filters] = build_filter
 
       authorize_providers
@@ -156,24 +158,36 @@ module Api
       options[:effective_date] = end_date
       options[:test_id] = rp._id
       options['prefilter'] = build_mr_prefilter if APP_CONFIG['use_map_reduce_prefilter']
+      prefilter = build_mr_prefilter_qsi(params[:providers]) if APP_CONFIG['use_map_reduce_prefilter']
 
       qr = QME::QualityReport.find_or_create(params[:measure_id],
                                              params[:sub_id], options)
       if !qr.calculated?
+        #qr.calculate({"oid_dictionary" => OidHelper.generate_oid_dictionary(qr.measure),
+        #              "enable_rationale" => APP_CONFIG['enable_map_reduce_rationale'] || false,
+        #              "enable_logging" => APP_CONFIG['enable_map_reduce_logging'] || false}, true)
         qr.calculate({"oid_dictionary" => OidHelper.generate_oid_dictionary(qr.measure),
                       "enable_rationale" => APP_CONFIG['enable_map_reduce_rationale'] || false,
-                      "enable_logging" => APP_CONFIG['enable_map_reduce_logging'] || false}, true)
+                      "enable_logging" => APP_CONFIG['enable_map_reduce_logging'] || false,
+                      "prefilter" => prefilter}, true)
       end
 
       if current_user.preferences.show_aggregate_result && !APP_CONFIG['use_opml_structure']
         agg_options = options.clone
-        agg_options[:filters][:providers] = [Provider.root._id.to_s]
+        #agg_options[:filters][:providers] = [Provider.root._id.to_s]
+        agg_options[:filters][:providers] = [get_parent_provider_qsi(params[:providers][0])]
+        prefilter = build_mr_prefilter_qsi(agg_options[:filters][:providers]) if APP_CONFIG['use_map_reduce_prefilter']
         aqr = QME::QualityReport.find_or_create(params[:measure_id],
                                                 params[:sub_id], agg_options)
         if !aqr.calculated?
+          #aqr.calculate({"oid_dictionary" => OidHelper.generate_oid_dictionary(aqr.measure),
+          #               "enable_rationale" => APP_CONFIG['enable_map_reduce_rationale'] || false,
+          #               "enable_logging" => APP_CONFIG['enable_map_reduce_logging'] || false, true)
+          qr.destroy_patient_results
           aqr.calculate({"oid_dictionary" => OidHelper.generate_oid_dictionary(aqr.measure),
                          "enable_rationale" => APP_CONFIG['enable_map_reduce_rationale'] || false,
-                         "enable_logging" => APP_CONFIG['enable_map_reduce_logging'] || false}, true)
+                         "enable_logging" => APP_CONFIG['enable_map_reduce_logging'] || false,
+                         "prefilter" => prefilter}, true)
         end
       end
 
@@ -187,6 +201,7 @@ module Api
     def destroy
       qr = QME::QualityReport.find(params[:id])
       authorize! :delete, qr
+      #qr.destroy_patient_results
       qr.destroy
       log_api_call LogAction::DELETE, "Remove clinical quality calculation"
       render :status => 204, :text => ""
@@ -196,10 +211,16 @@ module Api
     param :id, String, :desc => 'The id of the quality measure calculation', :required => true
 
     def recalculate
+      prefilter = {}
       qr = QME::QualityReport.find(params[:id])
       authorize! :recalculate, qr
+      prefilter = build_mr_prefilter_qsi(qr.filters['providers']) if APP_CONFIG['use_map_reduce_prefilter']
+      #qr.destroy_patient_results
+      #qr.calculate({"oid_dictionary" => OidHelper.generate_oid_dictionary(qr.measure_id),
+      #              'recalculate' => true}, true)
       qr.calculate({"oid_dictionary" => OidHelper.generate_oid_dictionary(qr.measure_id),
-                    'recalculate' => true}, true)
+                    'recalculate' => true,
+                    "prefilter" => prefilter}, true)
       log_api_call LogAction::UPDATE, "Force a clinical quality calculation"
       render json: qr
     end
@@ -389,6 +410,22 @@ module Api
       measure = HealthDataStandards::CQM::Measure.where({"hqmf_id" => params[:measure_id], "sub_id" => params[:sub_id]}).first
       measure.prefilter_query!(params[:effective_date].to_i)
       measure.prefilter_query!(params[:effective_start_date].to_i)
+    end
+
+    def build_mr_prefilter_qsi(providers)
+      providers_bson = providers.map { |pv| BSON::ObjectId.from_string(pv) }
+      map_reduce_query =    {"provider_performances.provider_id" => {'$in' => providers_bson}}
+      #prefilter = build_mr_prefilter
+      #prefilter.merge! map_reduce_query
+      prefilter = map_reduce_query
+      prefilter
+    end
+
+    def get_parent_provider_qsi(provider)
+      provider=Provider.find(provider)
+      parent_provider= provider._id
+      parent_provider=provider.parent_id if !provider.parent_id.nil?
+      parent_provider.to_s
     end
 
     def build_patient_filter

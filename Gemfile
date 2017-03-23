@@ -10,8 +10,8 @@ gem 'bson_ext', '~> 1.5.1'
 gem 'delayed_job_mongoid', git: 'https://github.com/collectiveidea/delayed_job_mongoid', tag: 'v2.2.0'
 gem 'health-data-standards', git: 'https://github.com/OSEHRA/health-data-standards.git', branch: 'mongoid5R2'
 
-gem 'quality-measure-engine',
-    git: 'https://github.com/projectcypress/quality-measure-engine.git', branch: 'bump_mongoid'
+gem 'quality-measure-engine', :path=> '../quality-measure-engine'
+    #git: 'https://github.com/projectcypress/quality-measure-engine.git', branch: 'bump_mongoid'
 
 gem "hqmf2js", :git=> "https://github.com/OSEHRA/hqmf2js.git"
 gem 'nokogiri', '~> 1.6.8'
