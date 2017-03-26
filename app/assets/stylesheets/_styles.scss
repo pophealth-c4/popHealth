@@ -1,5 +1,6 @@
 $circle-bkg-color: #fff;
 $title-circle-radius: 21px;
+$footnote-size: 0.8em;
 
 // Custom styles that are part of the theme
 
@@ -426,6 +427,65 @@ $table-border-color: white;
   label {
     margin-left: 10px;
   }
+}
+
+.measure-baselines {
+  margin-left: 40px;
+  margin-right: 40px;
+  table {
+    width: 100%;
+    th {
+      background-color: $gray-lighter;
+    }
+    th, td {
+      text-align: center;
+      padding: 5px 10px;
+    }
+    td.measure, th.measure {
+      width: 100%;
+      text-align: left;
+    }
+  }
+  .description {
+    color: lighten(black, 50%);
+    font-size: 0.8em;
+    margin: 1px 5px 0px 15px;
+  }
+  .subtitle {
+    color: lighten(black, 20%);
+    font-size: 0.9em;
+    margin-left: 15px;
+  }
+  .baseline-percentage, .measure-percentage {
+    font-size: 1.7em;
+  }
+  .no-data-value {
+    background-color: lighten(black, 80%);
+  }
+  .good-measure-value {
+    background-color: lighten(green, 30%);
+  }
+  .medium-measure-value {
+    background-color: lighten(yellow, 30%);
+  }
+  .poor-measure-value {
+    background-color: lighten(red, 30%);
+  }
+}
+
+.footnotes {
+  border-top: solid 1px gray;
+  margin-top: 30px;
+  padding-top: 5px;
+  margin-bottom: 10px;
+
+  li {
+    font-size: $footnote-size;
+  }
+}
+
+.footnote {
+  font-size: $footnote-size;
 }
 
 #logsContainer {

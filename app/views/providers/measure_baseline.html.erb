@@ -1,0 +1,61 @@
+<% last_measure = "" %>
+<% footnotes = [] %>
+<div class="measure-baselines">
+  <h2><%= @provider.full_name unless @provider.nil? %></h2>
+  <h3>
+    <%= Time.at(@effective_start_date).utc.to_datetime.strftime("%m/%d/%Y") %> to
+    <%= Time.at(@effective_date).utc.to_datetime.strftime("%m/%d/%Y") %>
+  </h3>
+  <table class="table-bordered">
+    <tr>
+      <th class="measure">Measure</th>
+      <th>Your Performance</th>
+      <% @baseline_sources.each do |source| %>
+        <th>
+          <%=source.name%>
+          <% if add_footnote(source.reference, footnotes) %>
+            <span class="footnote"><%= "[#{footnotes.length}]" %></span>
+          <% end %>
+        </th>
+      <% end %>
+    </tr>
+    <% @results.each do |key, value| %>
+      <% unless value[:measure].nil? %>
+        <tr>
+          <td class="measure">
+            <% unless last_measure == value[:measure].hqmf_id %>
+              <%=value[:measure].title %>
+              <div class="description">
+                <%=value[:measure].description%>
+              </div>
+              <% unless value[:measure].subtitle.nil? %>
+              <br/>
+              <% end %>
+            <% end %>
+            <% unless value[:measure].subtitle.nil? %>
+              <span class="subtitle"><%=value[:measure].subtitle%></span>
+            <% else %>
+            <% end %>
+          </td>
+          <td class="<%= value[:result].nil? ? 'measure-no-data' : 'measure-percentage' %> <%= get_target_range_css_class(value[:baseline].values, value[:result], value[:measure].lower_is_better) %>">
+            <%=value[:result].nil? ? "Not available" : value[:result].to_s + '%' %>
+          </td>
+          <% value[:baseline].each do |baseline_key, baseline_value| %>
+            <td class="<%= baseline_value.nil? ? 'baseline-no-data' : 'baseline-percentage' %>">
+              <%= baseline_value.nil? ? "Data not available" : baseline_value.result[:value] %>
+            </td>
+          <% end %>
+      <% end %>
+      <% last_measure = value[:measure].hqmf_id %>
+    <% end %>
+  </table>
+  <div class="footnotes">
+    <% if footnotes.length > 0 %>
+      <ol>
+      <% footnotes.each do |footnote| %>
+        <li class="footnote"><%= raw footnote %></li>
+      <% end %>
+      </ol>
+    <% end %>
+  </div>
+</div>
