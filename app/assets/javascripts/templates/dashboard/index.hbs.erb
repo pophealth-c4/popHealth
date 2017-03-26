@@ -52,6 +52,12 @@
           <input class="rescale" type="radio" value="true" name="population_chart_scale" {{#if populationChartScaledToIPP}}checked{{/if}}/>
         </label>
       </div>
+      {{#if showMeasureBaselineReport}}
+        <a class="btn btn-primary" href="providers/{{provider_id}}/measure_baseline" class="patient-btn pull-right">
+          <i class="fa fa-pie-chart"></i>
+          Baseline
+        </a>
+      {{/if}}
       <div class="dropdown dropdown-btn pull-right">
         <div class="dropdown-toggle pull-right btn btn-primary" data-toggle="dropdown" href="#">
           <i class="glyphicon glyphicon-download-alt"></i> Export</a>

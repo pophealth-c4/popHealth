@@ -177,6 +177,7 @@ class Thorax.Views.Dashboard extends Thorax.View
       # end HACK alert
 
 #this.insertFilenameLinks()
+    @showMeasureBaselineReport = Config.showMeasureBaselineReport
 
   toggleAggregateShow: (e) ->
     shown = PopHealth.currentUser.showAggregateResult()

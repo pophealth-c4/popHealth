@@ -1,0 +1,116 @@
+[
+  {
+    "source": {
+      "name": "Test Source A",
+      "display_order": 1
+    },
+    "baselines": [
+      {
+        "measure_id": "0013",
+        "start_date": 1419984000,
+        "end_date": 1451520000,
+        "calculation_date": 1451260800,
+        "result": {
+          "type": "static",
+          "value": "75%"
+        }
+      },
+      {
+        "measure_id": "0013",
+        "start_date": 1419984000,
+        "end_date": 1451520000,
+        "calculation_date": 1451174400,
+        "result": {
+          "type": "static",
+          "value": "74%"
+        }
+      },
+      {
+        "measure_id": "0032",
+        "start_date": 1388448000,
+        "end_date": 1419984000,
+        "calculation_date": 1419724800,
+        "result": {
+          "type": "static",
+          "value": "73%"
+        }
+      },
+      {
+        "measure_id": "0032",
+        "start_date": 1419984000,
+        "end_date": 1451520000,
+        "calculation_date": 1451347200,
+        "result": {
+          "type": "static",
+          "value": "72%"
+        }
+      }
+    ]
+  },
+  {
+    "source": {
+      "name": "Test Source B",
+      "display_order": 2
+    },
+    "baselines": [
+      {
+        "measure_id": "0013",
+        "start_date": 1419984000,
+        "end_date": 1451520000,
+        "calculation_date": 1451260800,
+        "result": {
+          "type": "static",
+          "value": "100%"
+        }
+      }
+    ]
+  },
+  {
+    "source": {
+      "name": "Test Source C",
+      "display_order": 3,
+      "use_as_comparison": true
+    },
+    "baselines": [
+      {
+        "measure_id": "0013",
+        "start_date": 1419984000,
+        "end_date": 1451520000,
+        "calculation_date": 1451260800,
+        "result": {
+          "type": "static",
+          "value": "100%"
+        },
+        "target_range": {
+          "good": 10.0,
+          "medium": 5.0,
+          "poor": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "source": {
+      "name": "Test Source D",
+      "display_order": 3,
+      "use_as_comparison": true
+    },
+    "baselines": [
+      {
+        "measure_id": "0013",
+        "start_date": 1419984000,
+        "end_date": 1451520000,
+        "calculation_date": 1451260800,
+        "result": {
+          "type": "static",
+          "value": "100%"
+        },
+        "target_range": {
+          "good": 100.0,
+          "medium": 50.0,
+          "poor": 10.0
+        }
+      }
+    ]
+  }
+]

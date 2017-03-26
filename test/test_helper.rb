@@ -7,6 +7,8 @@ require 'rails/test_help'
 require 'factory_girl'
 require 'mocha/setup'
 
+require_relative '../lib/measures/baseline_loader.rb'
+
 FactoryGirl.find_definitions
 
 class ActiveSupport::TestCase
@@ -33,6 +35,11 @@ class ActiveSupport::TestCase
     JSON.parse(File.read(File.join(Rails.root, 'test', 'fixtures', 'code_sets', 'ethnicities.json'))).each do |document|
       MONGO_DB['ethnicities'].insert_one(document)
     end
+  end
+
+  def load_measure_baselines
+    # Drop all measure baselines and reload
+    Measures::BaselineLoader.import_json File.join(Rails.root, 'test', 'fixtures', 'measure_baselines.json'), true
   end
 
   def raw_post(action, body, parameters = nil, session = nil, flash = nil)

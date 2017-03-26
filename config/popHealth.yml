@@ -28,6 +28,14 @@ defaults: &defaults
   
   # use workaround for new measure bundle 2.6.0 to get measure results
   ignore_provider_performance_dates: true
+
+   # Enable/disable the viewing of the measure baseline report
+  show_measure_baseline_report: false
+  # Define the ranges to color-code the provider's results in the baseline report
+  measure_baseline_ranges:
+    good: 70.0
+    medium: 50.0
+    poor: 0.0
   
   # Specify the types of events that you would like to record in the log
   log_to_database:
