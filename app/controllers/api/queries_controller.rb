@@ -413,10 +413,11 @@ module Api
     end
 
     def build_mr_prefilter_qsi(providers)
-      providers_bson = providers.map { |pv| BSON::ObjectId.from_string(pv) }
-      map_reduce_query =    {"provider_performances.provider_id" => {'$in' => providers_bson}}
-      #prefilter = build_mr_prefilter
-      #prefilter.merge! map_reduce_query
+      map_reduce_query = nil
+      unless providers.blank?
+        providers_bson = providers.map { |pv| BSON::ObjectId.from_string(pv) }
+        map_reduce_query = {"provider_performances.provider_id" => {'$in' => providers_bson}}
+      end
       prefilter = map_reduce_query
       prefilter
     end
