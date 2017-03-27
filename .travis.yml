@@ -17,6 +17,9 @@ notifications:
       - healthcare-ci@googlegroups.com
     on_failure: change
 bundler_args: --without test develop
+before_script:
+  - npm install -g bower
+  - bower install
 
 branches: 
   only:
